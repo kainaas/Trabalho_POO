@@ -29,9 +29,12 @@ public class TopPanel extends JPanel {
 
     ImageIcon dark, light, edit, create, search;
 
-    public TopPanel() {
+    Controller C;
+
+    public TopPanel(Controller C) {
         super();
         setLayout(new BorderLayout(40, 0));
+        this.C = C;
         setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
         createComponents();
         buildLayout();
@@ -129,7 +132,8 @@ public class TopPanel extends JPanel {
 
    public static void main(String[] args) {
         JFrame frame = new JFrame();
-        TopPanel painel = new TopPanel();
+        Controller C = new Controller();
+        TopPanel painel = new TopPanel(C);
         frame.setSize(1920, 1080);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(painel, BorderLayout.NORTH);
