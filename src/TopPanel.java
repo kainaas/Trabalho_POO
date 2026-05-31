@@ -1,11 +1,18 @@
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.Font;
+import java.awt.Dimension;
+
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.SwingConstants;
 
 import javax.swing.ImageIcon;
 import java.awt.Image;
@@ -16,20 +23,21 @@ public class TopPanel extends JPanel {
     
     JToggleButton dayView, weekView, monthView, yearView, darkMode, lightMode;
     JButton createButton, editButton;
-    JLabel labelView;
-    JTextArea searchBar;
+    JLabel currentViewLabel;
+    JTextField searchBar;
     ButtonGroup chooseView, chooseDarkMode;
 
     ImageIcon dark, light, edit, create, search;
 
     public TopPanel() {
         super();
-        //setLayout();
-        createButtons();
-        addToggleButtons();
+        setLayout(new BorderLayout(40, 0));
+        setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+        createComponents();
+        buildLayout();
     }
 
-    private void createButtons() {
+    private void createComponents() {
         this.dayView = new JToggleButton("Day", true); //starts viewing day
         this.weekView = new JToggleButton("Week", false);
         this.monthView = new JToggleButton("Month", false);
@@ -65,18 +73,58 @@ public class TopPanel extends JPanel {
 
         this.createButton = new JButton(edit);
         this.editButton = new JButton(create);
+         currentViewLabel = new JLabel(
+                "Day of Month of Year",
+                SwingConstants.CENTER);
+
+        currentViewLabel.setFont(
+                new Font("SansSerif", Font.BOLD, 24));
+
+        searchBar = new JTextField();
+        searchBar.setPreferredSize(new Dimension(350, 40));
+        searchBar.setToolTipText(
+                "Search by title, description or location");
     }
 
-    private void addToggleButtons() {
-        this.add(this.dayView);
-        this.add(this.weekView);
-        this.add(this.monthView);
-        this.add(this.yearView);
-        this.add(this.darkMode);
-        this.add(this.lightMode);
-        
-        this.add(this.createButton);
-        this.add(this.editButton);
+
+    private void buildLayout() {
+
+        // ==========================================
+        // LEFT PANEL (Day / Week / Month / Year)
+        // ==========================================
+        JPanel leftPanel = new JPanel(
+                new FlowLayout(FlowLayout.LEFT, 0, 0));
+
+        leftPanel.add(dayView);
+        leftPanel.add(weekView);
+        leftPanel.add(monthView);
+        leftPanel.add(yearView);
+
+        // ==========================================
+        // CENTER PANEL
+        // ==========================================
+        JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
+
+        centerPanel.add(currentViewLabel, BorderLayout.NORTH);
+        centerPanel.add(searchBar, BorderLayout.CENTER);
+
+        // ==========================================
+        // RIGHT PANEL
+        // ==========================================
+        JPanel rightPanel = new JPanel(
+                new GridLayout(2, 2, 10, 10));
+
+        rightPanel.add(lightMode);
+        rightPanel.add(darkMode);
+        rightPanel.add(editButton);
+        rightPanel.add(createButton);
+
+        // ==========================================
+        // ADD TO TOP PANEL
+        // ==========================================
+        add(leftPanel, BorderLayout.WEST);
+        add(centerPanel, BorderLayout.CENTER);
+        add(rightPanel, BorderLayout.EAST);
     }
 
    public static void main(String[] args) {
