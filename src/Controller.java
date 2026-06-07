@@ -1,5 +1,9 @@
 import java.time.LocalDate;
 
+
+/**
+ * Holds all the logic information that controls the current state of the program
+ */
 public class Controller {
     private LocalDate viewDate; //Date which the view shows
     private boolean darkMode;
@@ -47,9 +51,5 @@ public class Controller {
 
     public LocalDate getCurrentDate() {
         return LocalDate.now();
-    }
-
-    public int Test(int k) {
-        return k;
     }
 }
