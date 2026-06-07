@@ -3,6 +3,10 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Defines an Event.
@@ -16,6 +20,15 @@ public final class Event {
     private String description;
     private String category; //TODO: create some form of structure that adds categories to the system
 
+    // antecedencia do lembrete em minutos (0 = sem lembrete)
+    private long reminderLeadMinutes;
+    // tipo de repeticao do evento
+    private Recurrence recurrence;
+    // participantes convidados
+    private final List<Attendee> attendees = new ArrayList<>();
+    // datas que foram tiradas de uma serie recorrente (ocorrencias apagadas/editadas)
+    private final Set<LocalDate> exceptionDates = new HashSet<>();
+
     /**
      * Creates an event with all the information
      */
@@ -26,8 +39,11 @@ public final class Event {
         setTitle(title);
         setCategory(category);
         setDescription(description);
+        this.location = "";
+        this.recurrence = Recurrence.NONE;
+        this.reminderLeadMinutes = 0;
     }
-    
+
     /**
      * Constructor without duration. default is an hour
      */
@@ -38,6 +54,9 @@ public final class Event {
         setCategory(category);
         setDescription(description);
         this.duration = 60;
+        this.location = "";
+        this.recurrence = Recurrence.NONE;
+        this.reminderLeadMinutes = 0;
     }
 
     public void setTime(int hour, int minute) throws DateTimeException {
@@ -105,5 +124,67 @@ public final class Event {
     public LocalDateTime getEndOfevent() {
         LocalDateTime end = LocalDateTime.of(this.date, this.time);
         return end.plusMinutes(this.duration);
+    }
+
+    public void setReminderLeadMinutes(long minutes) {
+        this.reminderLeadMinutes = minutes;
+    }
+
+    public long getReminderLeadMinutes() {
+        return reminderLeadMinutes;
+    }
+
+    public void setRecurrence(Recurrence recurrence) {
+        this.recurrence = recurrence;
+    }
+
+    public Recurrence getRecurrence() {
+        return recurrence;
+    }
+
+    public void addAttendee(Attendee attendee) {
+        attendees.add(attendee);
+    }
+
+    public List<Attendee> getAttendees() {
+        return attendees;
+    }
+
+    public void clearAttendees() {
+        attendees.clear();
+    }
+
+    // marca uma data como excecao, para que a serie nao apareca mais nesse dia
+    public void addExceptionDate(LocalDate date) {
+        exceptionDates.add(date);
+    }
+
+    public Set<LocalDate> getExceptionDates() {
+        return exceptionDates;
+    }
+
+    public boolean isRecurring() {
+        return recurrence != Recurrence.NONE;
+    }
+
+    /**
+     * Diz se o evento acontece no dia informado, ja considerando a repeticao
+     * e as datas que foram retiradas da serie.
+     */
+    public boolean occursOn(LocalDate day) {
+        if (day.isBefore(date) || exceptionDates.contains(day)) {
+            return false;
+        }
+        switch (recurrence) {
+            case DAILY:   return true;
+            case WEEKLY:  return day.getDayOfWeek() == date.getDayOfWeek();
+            case MONTHLY: return day.getDayOfMonth() == date.getDayOfMonth();
+            default:      return day.equals(date);
+        }
+    }
+
+    // momento exato (data + hora) em que a ocorrencia daquele dia comeca
+    public LocalDateTime occurrenceStart(LocalDate day) {
+        return LocalDateTime.of(day, time);
     }
 }
