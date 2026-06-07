@@ -1,3 +1,4 @@
+package View;
 import javax.swing.ImageIcon;
 import java.awt.Image;
 
@@ -26,8 +27,8 @@ enum IconFiles {
  * Facilitates the creation of icons of a desired size, with the desired theme
  */
 public class Icons {
-    static private final String darkModePath = "../imgs/darkMode/";
-    static private final String lightModePath = "../imgs/lightMode/";
+    static private final String darkModePath = "./iconImages/darkMode/";
+    static private final String lightModePath = "./iconImages/lightMode/";
 
     static private ImageIcon getIconScaled(String path, int width, int height) {
         ImageIcon icon = new ImageIcon(path);

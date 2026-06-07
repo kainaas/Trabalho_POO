@@ -1,3 +1,4 @@
+package Model;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -50,7 +51,7 @@ public final class Event {
     }
 
     public void setTitle(String title) throws NullPointerException {
-        this.title = title;
+        this.title = title.trim();
     }
 
     public void setDurationInMinutes(long durationMinutes) {

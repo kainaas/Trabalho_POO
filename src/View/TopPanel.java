@@ -1,3 +1,4 @@
+package View;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -13,6 +14,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
+
+import Controller.Controller;
 
 import javax.swing.ImageIcon;
 import java.awt.Image;
@@ -36,23 +39,28 @@ public class TopPanel extends JPanel {
 
     Controller Control;
 
-    public TopPanel(Controller C) {
+    public TopPanel() {
         super();
         setLayout(new BorderLayout(40, 0));
-        this.Control = C;
         setBorder(BorderFactory.createEmptyBorder(20, 80, 20, 80));
         createComponents();
         buildLayout();
-        addActionListeners();
 
         //TODO: make a function that refresh the icons and colors of buttons and colors
     }
 
     private void createComponents() {
+        Dimension viewButtonSize = new Dimension(90, 35);
+
         this.dayView = new JToggleButton("Day", true); //starts viewing day
         this.weekView = new JToggleButton("Week", false);
         this.monthView = new JToggleButton("Month", false);
         this.yearView = new JToggleButton("Year", false);
+
+        dayView.setPreferredSize(viewButtonSize);
+        weekView.setPreferredSize(viewButtonSize);
+        monthView.setPreferredSize(viewButtonSize);
+        yearView.setPreferredSize(viewButtonSize);
         
         this.chooseView = new ButtonGroup();
         this.chooseView.add(dayView);
@@ -78,6 +86,8 @@ public class TopPanel extends JPanel {
 
         this.previousDate = new JButton("<");
         this.nextDate = new JButton(">");
+        previousDate.setPreferredSize(viewButtonSize);
+        nextDate.setPreferredSize(viewButtonSize);
 
         String label = LocalDate.now().toString();
         this.currentViewLabel = new JLabel(
@@ -110,7 +120,7 @@ public class TopPanel extends JPanel {
         viewModePanel.add(yearView);
 
         JPanel previousNextPanel = new JPanel(
-            new FlowLayout(FlowLayout.LEFT, 0, 0));
+            new FlowLayout(FlowLayout.CENTER, 0, 0));
         previousNextPanel.add(previousDate);
         previousNextPanel.add(nextDate);
         leftPanel.add(viewModePanel);
@@ -143,19 +153,9 @@ public class TopPanel extends JPanel {
         add(rightPanel, BorderLayout.EAST);
     }
 
-    private void addActionListeners() {
-        dayView.addActionListener(e->{
-            this.Control.setViewMode(ViewMode.DAY);
-        });
-    }
 
-   public static void main(String[] args) {
-        JFrame frame = new JFrame();
-        Controller C = new Controller();
-        TopPanel painel = new TopPanel(C);
-        frame.setSize(1920, 1080);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(painel, BorderLayout.NORTH);
-        frame.setVisible(true);
+    private void refreshLabel() {
+
     }
 }
+

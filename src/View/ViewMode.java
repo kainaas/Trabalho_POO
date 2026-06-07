@@ -1,3 +1,4 @@
+package View;
 
 /**
  * Determines the main panel view.
