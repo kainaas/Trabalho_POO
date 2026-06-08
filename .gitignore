@@ -1,6 +1,9 @@
 # Compiled class file
 *.class
 
+# arquivo de dados gerado em tempo de execucao
+events.txt
+
 # Log file
 *.log
 
