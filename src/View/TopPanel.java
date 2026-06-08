@@ -16,10 +16,16 @@ import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 
 import Controller.Controller;
+import Model.CalendarModel;
 
 import javax.swing.ImageIcon;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Image;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 //TODO: create a class with constants indicating the colors and images of light mode and dark mode
 
@@ -52,9 +58,9 @@ public class TopPanel extends JPanel {
     private void createComponents() {
         Dimension viewButtonSize = new Dimension(90, 35);
 
-        this.dayView = new JToggleButton("Day", true); //starts viewing day
+        this.dayView = new JToggleButton("Day", false);
         this.weekView = new JToggleButton("Week", false);
-        this.monthView = new JToggleButton("Month", false);
+        this.monthView = new JToggleButton("Month", true); //comeca mostrando o mes
         this.yearView = new JToggleButton("Year", false);
 
         dayView.setPreferredSize(viewButtonSize);
@@ -81,8 +87,8 @@ public class TopPanel extends JPanel {
         this.edit = Icons.lightIcon(IconFiles.EDIT_ICON, 20, 20);
         this.create = Icons.lightIcon(IconFiles.CREATE_ICON, 20, 20);
 
-        this.createButton = new JButton(edit);
-        this.editButton = new JButton(create);
+        this.createButton = new JButton(create);
+        this.editButton = new JButton(edit);
 
         this.previousDate = new JButton("<");
         this.nextDate = new JButton(">");
@@ -156,6 +162,89 @@ public class TopPanel extends JPanel {
 
     private void refreshLabel() {
 
+    }
+
+    // liga os botoes do topo as acoes do controller
+    public void bind(Controller controller) {
+        this.Control = controller;
+
+        dayView.addActionListener(e -> controller.setViewMode(ViewMode.DAY));
+        weekView.addActionListener(e -> controller.setViewMode(ViewMode.WEEK));
+        monthView.addActionListener(e -> controller.setViewMode(ViewMode.MONTH));
+        yearView.addActionListener(e -> controller.setViewMode(ViewMode.YEAR));
+
+        previousDate.addActionListener(e -> controller.goPrevious());
+        nextDate.addActionListener(e -> controller.goNext());
+
+        darkMode.addActionListener(e -> controller.setDarkMode(true));
+        lightMode.addActionListener(e -> controller.setDarkMode(false));
+    }
+
+    // atualiza o rotulo central e as cores conforme o estado do modelo
+    public void refresh() {
+        if (Control == null) {
+            return;
+        }
+        CalendarModel model = Control.getModel();
+        currentViewLabel.setText(buildLabel(model));
+        applyTheme(modeColors.of(model.getDarkMode()));
+    }
+
+    public JButton getCreateButton() {
+        return createButton;
+    }
+
+    public JButton getEditButton() {
+        return editButton;
+    }
+
+    public JTextField getSearchBar() {
+        return searchBar;
+    }
+
+    private String buildLabel(CalendarModel model) {
+        LocalDate d = model.getCurrentViewDate();
+        Locale ptbr = new Locale("pt", "BR");
+        switch (model.getCurrentMode()) {
+            case DAY:
+                return capitalize(d.format(
+                    DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy", ptbr)));
+            case WEEK:
+                return "Semana de " + d.format(
+                    DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            case YEAR:
+                return String.valueOf(d.getYear());
+            case MONTH:
+            default:
+                return capitalize(d.format(
+                    DateTimeFormatter.ofPattern("MMMM 'de' yyyy", ptbr)));
+        }
+    }
+
+    private void applyTheme(modeColors mc) {
+        paintPanels(this, mc.background);
+        currentViewLabel.setForeground(mc.text);
+        searchBar.setBackground(mc.panel);
+        searchBar.setForeground(mc.text);
+    }
+
+    // pinta o fundo deste painel e dos paineis internos para o tema combinar
+    private void paintPanels(Container container, Color bg) {
+        if (container instanceof JPanel) {
+            container.setBackground(bg);
+        }
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof Container) {
+                paintPanels((Container) comp, bg);
+            }
+        }
+    }
+
+    private String capitalize(String s) {
+        if (s.isEmpty()) {
+            return s;
+        }
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 }
 

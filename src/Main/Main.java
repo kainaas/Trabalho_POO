@@ -4,16 +4,28 @@ import Model.*;
 import Controller.*;
 import View.*;
 
-import javax.swing.JFrame;
-import java.awt.BorderLayout;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
-        JFrame frame = new JFrame();
-        TopPanel painel = new TopPanel();
-        frame.setSize(1920, 1080);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(painel, BorderLayout.NORTH);
-        frame.setVisible(true);
+        CalendarModel model = new CalendarModel();
+        EventStorage storage = new EventStorage("events.txt");
+        Controller controller = new Controller(model, storage);
+
+        // carrega os eventos salvos antes de abrir a janela
+        try {
+            controller.loadFromDisk();
+        } catch (StorageException ex) {
+            JOptionPane.showMessageDialog(null, ex.getMessage(),
+                "Erro ao carregar eventos", JOptionPane.ERROR_MESSAGE);
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            CalendarView view = new CalendarView(controller);
+            view.setVisible(true);
+            // thread que fica de olho nos lembretes enquanto o programa roda
+            new ReminderService(model).start();
+        });
     }
 }
