@@ -2,6 +2,7 @@ package Model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 import View.ViewMode;
 import java.time.LocalDate;
 
@@ -27,7 +28,7 @@ public class CalendarModel extends  AbstractModel {
         this.eventList = new ArrayList<>();
     }
 
-    public void addEvent(Event e) {
+    public boolean addEvent(Event e) {
 
         if(eventList.isEmpty()
         || getEventByTitle(e.getTitle()) == null) {
@@ -39,11 +40,18 @@ public class CalendarModel extends  AbstractModel {
                 null,
                 e
             );
+            return true;
         }
+        return false; //ja existe um evento com esse titulo
     }
 
     public void removeEvent(Event e) {
         eventList.remove(e);
+        firePropertyChange(
+            "eventRemoved",
+            e,
+            null
+        );
     }
 
     public Event getEventByTitle(String title) {
@@ -54,6 +62,88 @@ public class CalendarModel extends  AbstractModel {
             }
         }
         return null; //if the event is not in the list
+    }
+
+    // todos os eventos que acontecem no dia, ja contando repeticoes, em ordem de horario
+    public List<Event> getEventsOn(LocalDate day) {
+        List<Event> doDia = new ArrayList<>();
+        for (Event e : eventList) {
+            if (e.occursOn(day)) {
+                doDia.add(e);
+            }
+        }
+        doDia.sort(Comparator.comparing(Event::getTime));
+        return doDia;
+    }
+
+    public boolean hasEventsOn(LocalDate day) {
+        for (Event e : eventList) {
+            if (e.occursOn(day)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // busca por palavra-chave no titulo, descricao, local ou categoria
+    public List<Event> searchEvents(String keyword) {
+        List<Event> resultado = new ArrayList<>();
+        if (keyword == null) {
+            return resultado;
+        }
+        String alvo = keyword.trim().toLowerCase();
+        if (alvo.isEmpty()) {
+            return resultado;
+        }
+        for (Event e : eventList) {
+            if (matches(e.getTitle(), alvo)
+            || matches(e.getDescription(), alvo)
+            || matches(e.getLocation(), alvo)
+            || matches(e.getCategory(), alvo)) {
+                resultado.add(e);
+            }
+        }
+        return resultado;
+    }
+
+    private boolean matches(String campo, String alvo) {
+        return campo != null && campo.toLowerCase().contains(alvo);
+    }
+
+    // adiciona sem checar titulo repetido (usado ao editar uma unica ocorrencia de uma serie)
+    public void addEventForced(Event e) {
+        eventList.add(e);
+        firePropertyChange(
+            "eventAdded",
+            null,
+            e
+        );
+    }
+
+    // tira so uma ocorrencia de uma serie recorrente (deixa as outras)
+    public void removeOccurrence(Event master, LocalDate day) {
+        master.addExceptionDate(day);
+        firePropertyChange(
+            "eventRemoved",
+            master,
+            null
+        );
+    }
+
+    // copia da lista, usada na hora de salvar em arquivo
+    public List<Event> getAllEvents() {
+        return new ArrayList<>(eventList);
+    }
+
+    // substitui a lista inteira (usado ao carregar do arquivo na inicializacao)
+    public void loadEvents(List<Event> events) {
+        eventList.clear();
+        eventList.addAll(events);
+        firePropertyChange(
+            "eventAdded",
+            null,
+            null
+        );
     }
 
 
