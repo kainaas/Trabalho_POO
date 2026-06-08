@@ -1,1 +1,1 @@
-javac -d bin ./Controller/*.java ./Model./*.java ./View/*.java ./Main/*.java
+javac -d bin ./Controller/*.java ./Model/*.java ./View/*.java ./Main/*.java
