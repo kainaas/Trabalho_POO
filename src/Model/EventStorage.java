@@ -12,10 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Cuida de salvar e carregar os eventos num arquivo de texto.
- * Cada evento ocupa uma linha, com os campos separados por TAB:
- * titulo, data, hora, duracao, categoria, local, descricao,
- * lembrete, repeticao, datas-excecao e participantes.
+ * Encharged with saving and loading the events in a text file.
+ * Each event ocupies one row, with the  fields separeted by TAB:
+ * title, date, hour, duration, category, local, description,
+ * reminder, repetition, exception-dates e participants.
  */
 public class EventStorage {
     private final File file;
@@ -31,14 +31,14 @@ public class EventStorage {
                 writer.newLine();
             }
         } catch (IOException ex) {
-            throw new StorageException("Nao foi possivel salvar os eventos no arquivo.");
+            throw new StorageException("It wasn't possible to save the events in the file.");
         }
     }
 
     /**
-     * Le os eventos do arquivo. Se o arquivo ainda nao existe (primeira
-     * execucao) devolve uma lista vazia. Linhas estragadas sao ignoradas
-     * para que um arquivo corrompido nao derrube o programa.
+     * read the events from the file. If the file does not exist yet (first
+     * execution), returns an empty list. Messed up lines are ignored
+     * in order for corrupted files to not take down the program.
      */
     public List<Event> load() throws StorageException {
         List<Event> events = new ArrayList<>();
@@ -57,7 +57,7 @@ public class EventStorage {
                 }
             }
         } catch (IOException ex) {
-            throw new StorageException("Nao foi possivel ler o arquivo de eventos.");
+            throw new StorageException("It wasn't possible to read the events file.");
         }
         return events;
     }
@@ -74,23 +74,23 @@ public class EventStorage {
         sb.append(e.getReminderLeadMinutes()).append('\t');
         sb.append(e.getRecurrence().name()).append('\t');
 
-        StringBuilder excecoes = new StringBuilder();
+        StringBuilder excepition_dates = new StringBuilder();
         for (LocalDate d : e.getExceptionDates()) {
-            if (excecoes.length() > 0) {
-                excecoes.append(',');
+            if (excepition_dates.length() > 0) {
+                excepition_dates.append(',');
             }
-            excecoes.append(d);
+            excepition_dates.append(d);
         }
-        sb.append(excecoes).append('\t');
+        sb.append(excepition_dates).append('\t');
 
-        StringBuilder convidados = new StringBuilder();
+        StringBuilder invited = new StringBuilder();
         for (Attendee a : e.getAttendees()) {
-            if (convidados.length() > 0) {
-                convidados.append(',');
+            if (invited.length() > 0) {
+                invited.append(',');
             }
-            convidados.append(simple(a.getName())).append('|').append(simple(a.getEmail()));
+            invited.append(simple(a.getName())).append('|').append(simple(a.getEmail()));
         }
-        sb.append(convidados);
+        sb.append(invited);
 
         return sb.toString();
     }
@@ -128,12 +128,12 @@ public class EventStorage {
             }
             return e;
         } catch (RuntimeException ex) {
-            // linha fora do formato esperado, ignora e segue
+            // line out of expected format
             return null;
         }
     }
 
-    // tira tabs e quebras de linha que estragariam o formato do arquivo
+    // remove tabs and line breaks that would fuck up the format of the file
     private String clean(String value) {
         if (value == null) {
             return "";
@@ -141,7 +141,7 @@ public class EventStorage {
         return value.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ');
     }
 
-    // alem de tabs, tira virgula e barra usadas como separadores de participante
+    // besides tabs, remove collons and bars, used as participants separator
     private String simple(String value) {
         return clean(value).replace(',', ' ').replace('|', ' ');
     }

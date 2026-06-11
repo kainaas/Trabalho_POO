@@ -1,7 +1,7 @@
 package Model;
 
 /**
- * Tipos de repeticao que um evento pode ter.
+ * Types of repetition an event may have
  */
 public enum Recurrence {
     NONE, DAILY, WEEKLY, MONTHLY;
@@ -9,10 +9,10 @@ public enum Recurrence {
     @Override
     public String toString() {
         switch (this) {
-            case DAILY:   return "Diario";
-            case WEEKLY:  return "Semanal";
-            case MONTHLY: return "Mensal";
-            default:      return "Nao se repete";
+            case DAILY:   return "Daily";
+            case WEEKLY:  return "Weekly";
+            case MONTHLY: return "Monthly";
+            default:      return "Does not repeat";
         }
     }
 }

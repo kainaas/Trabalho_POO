@@ -1,8 +1,8 @@
 package Model;
 
 /**
- * Problema ao ler ou gravar o arquivo de eventos.
- * A mensagem ja vem pronta para ser mostrada ao usuario.
+ * Problem while reading or saving the event files.
+ * the message comes ready to be shown to the user.
  */
 public class StorageException extends Exception {
     public StorageException(String message) {

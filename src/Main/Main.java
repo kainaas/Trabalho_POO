@@ -1,9 +1,8 @@
 package Main;
 
-import Model.*;
 import Controller.*;
+import Model.*;
 import View.*;
-
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
@@ -13,7 +12,7 @@ public class Main {
         EventStorage storage = new EventStorage("events.txt");
         Controller controller = new Controller(model, storage);
 
-        // carrega os eventos salvos antes de abrir a janela
+        // Loads the saved events before opening the window
         try {
             controller.loadFromDisk();
         } catch (StorageException ex) {
@@ -24,7 +23,6 @@ public class Main {
         SwingUtilities.invokeLater(() -> {
             CalendarView view = new CalendarView(controller);
             view.setVisible(true);
-            // thread que fica de olho nos lembretes enquanto o programa roda
             new ReminderService(model).start();
         });
     }

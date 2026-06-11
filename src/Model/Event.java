@@ -18,15 +18,15 @@ public final class Event {
     private String title;
     private String location;
     private String description;
-    private String category; //TODO: create some form of structure that adds categories to the system
+    private String category;
 
-    // antecedencia do lembrete em minutos (0 = sem lembrete)
+    // antecedence of reminder in minutes (0 = no reminder)
     private long reminderLeadMinutes;
-    // tipo de repeticao do evento
+    // type of repetitions
     private Recurrence recurrence;
-    // participantes convidados
+    // invited participants
     private final List<Attendee> attendees = new ArrayList<>();
-    // datas que foram tiradas de uma serie recorrente (ocorrencias apagadas/editadas)
+    // dates that are exceptions of recurrent events
     private final Set<LocalDate> exceptionDates = new HashSet<>();
 
     /**
@@ -154,7 +154,7 @@ public final class Event {
         attendees.clear();
     }
 
-    // marca uma data como excecao, para que a serie nao apareca mais nesse dia
+    // marks a date as an exception
     public void addExceptionDate(LocalDate date) {
         exceptionDates.add(date);
     }
@@ -168,8 +168,8 @@ public final class Event {
     }
 
     /**
-     * Diz se o evento acontece no dia informado, ja considerando a repeticao
-     * e as datas que foram retiradas da serie.
+     * tells if an event occurs in a designated day, already considering repetition
+     * and the exception dates.
      */
     public boolean occursOn(LocalDate day) {
         if (day.isBefore(date) || exceptionDates.contains(day)) {
@@ -183,7 +183,7 @@ public final class Event {
         }
     }
 
-    // momento exato (data + hora) em que a ocorrencia daquele dia comeca
+    // exact moment (date + hour) that the ocurrence of that day starts
     public LocalDateTime occurrenceStart(LocalDate day) {
         return LocalDateTime.of(day, time);
     }

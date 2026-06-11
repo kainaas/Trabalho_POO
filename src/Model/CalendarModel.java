@@ -1,13 +1,11 @@
 package Model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Comparator;
 import View.ViewMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
-
-//TODO: usar JavaBeans para que modificações no Model seja notificadas para view
 
 /**
  * Holds all the information that the program needs. Cannot have events with same title
@@ -42,7 +40,7 @@ public class CalendarModel extends  AbstractModel {
             );
             return true;
         }
-        return false; //ja existe um evento com esse titulo
+        return false; //there's already an event with this name
     }
 
     public void removeEvent(Event e) {
@@ -64,16 +62,16 @@ public class CalendarModel extends  AbstractModel {
         return null; //if the event is not in the list
     }
 
-    // todos os eventos que acontecem no dia, ja contando repeticoes, em ordem de horario
+    //all the events that happen in the day, already counting repetitions, in chronological order
     public List<Event> getEventsOn(LocalDate day) {
-        List<Event> doDia = new ArrayList<>();
+        List<Event> ofDay = new ArrayList<>();
         for (Event e : eventList) {
             if (e.occursOn(day)) {
-                doDia.add(e);
+                ofDay.add(e);
             }
         }
-        doDia.sort(Comparator.comparing(Event::getTime));
-        return doDia;
+        ofDay.sort(Comparator.comparing(Event::getTime));
+        return ofDay;
     }
 
     public boolean hasEventsOn(LocalDate day) {
@@ -85,7 +83,7 @@ public class CalendarModel extends  AbstractModel {
         return false;
     }
 
-    // busca por palavra-chave no titulo, descricao, local ou categoria
+    //searches for key-word in title, description, local or category
     public List<Event> searchEvents(String keyword) {
         List<Event> resultado = new ArrayList<>();
         if (keyword == null) {
@@ -110,7 +108,7 @@ public class CalendarModel extends  AbstractModel {
         return campo != null && campo.toLowerCase().contains(alvo);
     }
 
-    // adiciona sem checar titulo repetido (usado ao editar uma unica ocorrencia de uma serie)
+    // adds without checking repeated title (used to edit only one ocurrence of an event)
     public void addEventForced(Event e) {
         eventList.add(e);
         firePropertyChange(
@@ -120,7 +118,7 @@ public class CalendarModel extends  AbstractModel {
         );
     }
 
-    // tira so uma ocorrencia de uma serie recorrente (deixa as outras)
+    // removes only on ocurrence of a recurrent event (leaves the others)
     public void removeOccurrence(Event master, LocalDate day) {
         master.addExceptionDate(day);
         firePropertyChange(
@@ -130,12 +128,12 @@ public class CalendarModel extends  AbstractModel {
         );
     }
 
-    // copia da lista, usada na hora de salvar em arquivo
+    // copy of the list
     public List<Event> getAllEvents() {
         return new ArrayList<>(eventList);
     }
 
-    // substitui a lista inteira (usado ao carregar do arquivo na inicializacao)
+    // replaces the entire list
     public void loadEvents(List<Event> events) {
         eventList.clear();
         eventList.addAll(events);

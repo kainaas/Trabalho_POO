@@ -1,9 +1,5 @@
 package Controller;
 
-import java.time.DateTimeException;
-import java.time.LocalDate;
-import java.util.List;
-
 import Model.Attendee;
 import Model.CalendarModel;
 import Model.Event;
@@ -12,11 +8,14 @@ import Model.EventValidationException;
 import Model.Recurrence;
 import Model.StorageException;
 import View.ViewMode;
+import java.time.DateTimeException;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
- * Liga a interface ao modelo. Faz a validacao dos dados, cria/edita/apaga
- * eventos e manda salvar no arquivo. Nao mexe diretamente em componentes
- * de tela: quem avisa a view sao as notificacoes do proprio modelo.
+ * Connects the interface to the model. Make the data validation, creates/edits/erases
+ * events and tells to save in the file. Does not have direct access to screen elements:
+ * who notifies the view are the notifications from the model.
  */
 public class Controller {
     private final CalendarModel model;
@@ -32,9 +31,8 @@ public class Controller {
     }
 
     /**
-     * Monta um evento a partir dos dados do formulario, validando tudo.
-     * Em caso de erro lanca EventValidationException com uma mensagem
-     * ja pronta para o usuario.
+     * Builds an event from the formulary data, validating everything.
+     * Throws EventValidationException with a message when an error happens
      */
     public Event buildEvent(int year, int month, int day, int hour, int minute,
             long duration, String title, String category, String location,
@@ -42,10 +40,10 @@ public class Controller {
             List<Attendee> attendees) throws EventValidationException {
 
         if (title == null || title.trim().isEmpty()) {
-            throw new EventValidationException("O titulo do evento nao pode ficar vazio.");
+            throw new EventValidationException("The event title cannot be empty.");
         }
         if (duration <= 0) {
-            throw new EventValidationException("A duracao deve ser de pelo menos 1 minuto.");
+            throw new EventValidationException("The duration must be at least 1 minute.");
         }
 
         Event e;
@@ -54,7 +52,7 @@ public class Controller {
                     duration, title, category, description);
         } catch (DateTimeException ex) {
             throw new EventValidationException(
-                "Data ou hora invalida. Confira o dia, o mes e o horario.");
+                "Date or time invalid. Check the day, month and time");
         }
 
         e.setLocation(location == null ? "" : location.trim());
@@ -68,7 +66,7 @@ public class Controller {
         return e;
     }
 
-    // adiciona um evento novo; devolve false se ja existe outro com o mesmo titulo
+    // Adds a new event; Returns false if there's already an event with this title
     public boolean createEvent(Event e) throws StorageException {
         boolean adicionado = model.addEvent(e);
         if (adicionado) {
@@ -77,20 +75,22 @@ public class Controller {
         return adicionado;
     }
 
-    // troca um evento por uma versao editada (usado quando o usuario edita a serie toda).
-    // devolve false se o novo titulo bater com outro evento ja existente (ai mantem o antigo)
+    /** 
+     * Changes the event for an edited version
+     * @returns false if the new title already belongs to other events (in that case, keeps the old one)
+    */
     public boolean replaceEvent(Event oldEvent, Event newEvent) throws StorageException {
         model.removeEvent(oldEvent);
         boolean ok = model.addEvent(newEvent);
         if (!ok) {
-            model.addEvent(oldEvent); // desfaz para nao perder o evento antigo
+            model.addEvent(oldEvent);
             return false;
         }
         save();
         return true;
     }
 
-    // edita apenas a ocorrencia daquele dia: tira ela da serie e cria um evento avulso
+    // Edits only the ocurrence of that day: takes it out of the recurrence and creates a new event
     public void editOccurrence(Event master, LocalDate day, Event edited) throws StorageException {
         master.addExceptionDate(day);
         edited.setRecurrence(Recurrence.NONE);

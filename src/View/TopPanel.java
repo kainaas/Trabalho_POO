@@ -1,33 +1,26 @@
 package View;
+import Controller.Controller;
+import Model.CalendarModel;
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.awt.Font;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
-
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
-
-import Controller.Controller;
-import Model.CalendarModel;
-
-import javax.swing.ImageIcon;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Image;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
-
-//TODO: create a class with constants indicating the colors and images of light mode and dark mode
 
 
 /**
@@ -41,7 +34,7 @@ public class TopPanel extends JPanel {
     JTextField searchBar;
     ButtonGroup chooseView, chooseDarkMode;
 
-    ImageIcon darkSwitch, lightSwitch, edit, create, search;
+    ImageIcon darkSwitch, lightSwitch, edit, create;
 
     Controller Control;
 
@@ -51,8 +44,6 @@ public class TopPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(20, 80, 20, 80));
         createComponents();
         buildLayout();
-
-        //TODO: make a function that refresh the icons and colors of buttons and colors
     }
 
     private void createComponents() {
@@ -60,7 +51,7 @@ public class TopPanel extends JPanel {
 
         this.dayView = new JToggleButton("Day", false);
         this.weekView = new JToggleButton("Week", false);
-        this.monthView = new JToggleButton("Month", true); //comeca mostrando o mes
+        this.monthView = new JToggleButton("Month", true); //starts showing the month
         this.yearView = new JToggleButton("Year", false);
 
         dayView.setPreferredSize(viewButtonSize);
@@ -164,7 +155,7 @@ public class TopPanel extends JPanel {
 
     }
 
-    // liga os botoes do topo as acoes do controller
+    // Binds all the buttons to the actions of Controller
     public void bind(Controller controller) {
         this.Control = controller;
 
@@ -180,7 +171,7 @@ public class TopPanel extends JPanel {
         lightMode.addActionListener(e -> controller.setDarkMode(false));
     }
 
-    // atualiza o rotulo central e as cores conforme o estado do modelo
+    //Refreshes the Central Label and the colors, as the state of the model changes
     public void refresh() {
         if (Control == null) {
             return;
@@ -204,20 +195,20 @@ public class TopPanel extends JPanel {
 
     private String buildLabel(CalendarModel model) {
         LocalDate d = model.getCurrentViewDate();
-        Locale ptbr = new Locale("pt", "BR");
+        Locale enbr = new Locale("en", "BR");
         switch (model.getCurrentMode()) {
             case DAY:
                 return capitalize(d.format(
-                    DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy", ptbr)));
+                    DateTimeFormatter.ofPattern("EEEE, yyyy/MM/dd", enbr)));
             case WEEK:
-                return "Semana de " + d.format(
-                    DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                return "Week of " + d.format(
+                    DateTimeFormatter.ofPattern("yyyy/MM/dd"));
             case YEAR:
                 return String.valueOf(d.getYear());
             case MONTH:
             default:
                 return capitalize(d.format(
-                    DateTimeFormatter.ofPattern("MMMM 'de' yyyy", ptbr)));
+                    DateTimeFormatter.ofPattern("MMMM 'of' yyyy", enbr)));
         }
     }
 
@@ -228,7 +219,7 @@ public class TopPanel extends JPanel {
         searchBar.setForeground(mc.text);
     }
 
-    // pinta o fundo deste painel e dos paineis internos para o tema combinar
+    // paints the background of this panel and the background of the internal panels
     private void paintPanels(Container container, Color bg) {
         if (container instanceof JPanel) {
             container.setBackground(bg);

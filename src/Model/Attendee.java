@@ -1,7 +1,7 @@
 package Model;
 
 /**
- * Participante de um evento (nome e email).
+ * Participant of an event (name and email).
  */
 public class Attendee {
     private String name;
