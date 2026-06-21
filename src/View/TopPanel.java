@@ -178,7 +178,7 @@ public class TopPanel extends JPanel {
         }
         CalendarModel model = Control.getModel();
         currentViewLabel.setText(buildLabel(model));
-        applyTheme(modeColors.of(model.getDarkMode()));
+        applyTheme(model);
     }
 
     public JButton getCreateButton() {
@@ -212,11 +212,40 @@ public class TopPanel extends JPanel {
         }
     }
 
-    private void applyTheme(modeColors mc) {
+    private void applyTheme(CalendarModel model) {
+        boolean dark = model.getDarkMode();
+        modeColors mc = modeColors.of(dark);
+
         paintPanels(this, mc.background);
         currentViewLabel.setForeground(mc.text);
         searchBar.setBackground(mc.panel);
         searchBar.setForeground(mc.text);
+        searchBar.setCaretColor(mc.text);
+        searchBar.setBorder(BorderFactory.createLineBorder(mc.gridLine));
+
+        // theme-aware icons (light glyphs over dark buttons, dark glyphs otherwise)
+        darkSwitch = Icons.themed(IconFiles.SWITCH_DARK, dark, 30, 30);
+        lightSwitch = Icons.themed(IconFiles.SWITCH_LIGHT, dark, 30, 30);
+        edit = Icons.themed(IconFiles.EDIT_ICON, dark, 20, 20);
+        create = Icons.themed(IconFiles.CREATE_ICON, dark, 20, 20);
+        darkMode.setIcon(darkSwitch);
+        lightMode.setIcon(lightSwitch);
+        editButton.setIcon(edit);
+        createButton.setIcon(create);
+
+        // view toggles: the active mode is highlighted with the accent color
+        ViewMode current = model.getCurrentMode();
+        mc.styleButton(dayView, current == ViewMode.DAY);
+        mc.styleButton(weekView, current == ViewMode.WEEK);
+        mc.styleButton(monthView, current == ViewMode.MONTH);
+        mc.styleButton(yearView, current == ViewMode.YEAR);
+
+        mc.styleButton(previousDate, false);
+        mc.styleButton(nextDate, false);
+        mc.styleButton(createButton, false);
+        mc.styleButton(editButton, false);
+        mc.styleButton(lightMode, !dark);
+        mc.styleButton(darkMode, dark);
     }
 
     // paints the background of this panel and the background of the internal panels

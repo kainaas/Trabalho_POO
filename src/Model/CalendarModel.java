@@ -83,6 +83,17 @@ public class CalendarModel extends  AbstractModel {
         return false;
     }
 
+    // how many events happen on the given day (counting recurrences)
+    public int countEventsOn(LocalDate day) {
+        int count = 0;
+        for (Event e : eventList) {
+            if (e.occursOn(day)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     //searches for key-word in title, description, local or category
     public List<Event> searchEvents(String keyword) {
         List<Event> resultado = new ArrayList<>();

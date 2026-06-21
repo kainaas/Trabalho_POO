@@ -43,4 +43,13 @@ public class Icons {
     static public ImageIcon lightIcon(IconFiles file, int width, int height) {
         return getIconScaled(lightModePath.concat(file.getFileString()), width, height);
     }
+
+    /**
+     * Returns the icon for the given file using the theme-appropriate version:
+     * the dark-mode (light-colored) icon when {@code dark} is true, otherwise
+     * the light-mode (dark-colored) icon.
+     */
+    static public ImageIcon themed(IconFiles file, boolean dark, int width, int height) {
+        return dark ? darkIcon(file, width, height) : lightIcon(file, width, height);
+    }
 }

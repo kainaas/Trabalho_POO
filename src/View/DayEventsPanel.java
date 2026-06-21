@@ -48,6 +48,7 @@ public class DayEventsPanel extends JPanel {
     private final DefaultListModel<Event> listModel;
     private final JList<Event> eventJList;
     private final JTextArea details;
+    private JButton newButton, editButton, deleteButton;
 
     public DayEventsPanel(JFrame owner, Controller controller) {
         this.owner = owner;
@@ -86,18 +87,18 @@ public class DayEventsPanel extends JPanel {
     }
 
     private JPanel buildButtons() {
-        JButton novo = new JButton("Novo");
-        JButton editar = new JButton("Editar");
-        JButton excluir = new JButton("Excluir");
+        newButton = new JButton("Novo");
+        editButton = new JButton("Editar");
+        deleteButton = new JButton("Excluir");
 
-        novo.addActionListener(e -> openCreate());
-        editar.addActionListener(e -> openEdit());
-        excluir.addActionListener(e -> doDelete());
+        newButton.addActionListener(e -> openCreate());
+        editButton.addActionListener(e -> openEdit());
+        deleteButton.addActionListener(e -> doDelete());
 
         JPanel panel = new JPanel(new GridLayout(1, 3, 6, 0));
-        panel.add(novo);
-        panel.add(editar);
-        panel.add(excluir);
+        panel.add(newButton);
+        panel.add(editButton);
+        panel.add(deleteButton);
         return panel;
     }
 
@@ -109,6 +110,10 @@ public class DayEventsPanel extends JPanel {
         eventJList.setForeground(mc.text);
         details.setBackground(mc.panel);
         details.setForeground(mc.text);
+        details.setCaretColor(mc.text);
+        mc.styleButton(newButton, false);
+        mc.styleButton(editButton, false);
+        mc.styleButton(deleteButton, false);
 
         LocalDate day = model.getCurrentViewDate();
         dateLabel.setText(formatDate(day));

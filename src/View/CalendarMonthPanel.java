@@ -90,11 +90,25 @@ public class CalendarMonthPanel extends JPanel {
     }
 
     private JButton makeDayCell(LocalDate date, LocalDate today, LocalDate selected, modeColors mc) {
-        JButton cell = new JButton(String.valueOf(date.getDayOfMonth()));
+        int eventCount = model.countEventsOn(date);
+        String label = "<html>" + date.getDayOfMonth();
+        if (eventCount > 0) {
+            // small badge with the number of events on the day
+            label += " <sup>" + eventCount + "</sup>";
+        }
+        label += "</html>";
+
+        JButton cell = new JButton(label);
         cell.setVerticalAlignment(SwingConstants.TOP);
         cell.setHorizontalAlignment(SwingConstants.LEFT);
         cell.setFocusPainted(false);
+        cell.setOpaque(true);
+        cell.setContentAreaFilled(true);
+        cell.setBorderPainted(true);
         cell.setForeground(mc.text);
+        if (eventCount > 0) {
+            cell.setToolTipText(eventCount + (eventCount == 1 ? " event" : " events"));
+        }
 
         Color fundo = mc.panel;
         if (model.hasEventsOn(date)) {
