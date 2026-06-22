@@ -7,6 +7,15 @@ events.txt
 # Log file
 *.log
 
+# LaTeX build artifacts
+*.aux
+*.out
+*.toc
+docs/build.log
+
+# Test build output
+test/bin/
+
 # BlueJ files
 *.ctxt
 

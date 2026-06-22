@@ -1,4 +1,5 @@
 package View;
+
 import Controller.Controller;
 import Model.CalendarModel;
 import java.awt.BorderLayout;
@@ -22,22 +23,24 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 
-
 /**
- * Top panel which holds the buttons and search bar that interacts with the view and events
+ * Top bar holding the view-mode toggles, the navigation arrows, the date label,
+ * the search field, the theme switch and the create/edit buttons. It interacts
+ * with the rest of the application only through the {@link Controller}.
  */
 public class TopPanel extends JPanel {
-    
-    JToggleButton dayView, weekView, monthView, yearView, darkMode, lightMode;
-    JButton createButton, editButton, previousDate, nextDate;
-    JLabel currentViewLabel;
-    JTextField searchBar;
-    ButtonGroup chooseView, chooseDarkMode;
 
-    ImageIcon darkSwitch, lightSwitch, edit, create;
+    private JToggleButton dayView, weekView, monthView, yearView, darkMode, lightMode;
+    private JButton createButton, editButton, previousDate, nextDate;
+    private JLabel currentViewLabel;
+    private JTextField searchBar;
+    private ButtonGroup chooseView, chooseDarkMode;
 
-    Controller Control;
+    private ImageIcon darkSwitch, lightSwitch, edit, create;
 
+    private Controller controller;
+
+    /** Builds the top bar and its components. */
     public TopPanel() {
         super();
         setLayout(new BorderLayout(40, 0));
@@ -51,14 +54,14 @@ public class TopPanel extends JPanel {
 
         this.dayView = new JToggleButton("Day", false);
         this.weekView = new JToggleButton("Week", false);
-        this.monthView = new JToggleButton("Month", true); //starts showing the month
+        this.monthView = new JToggleButton("Month", true); // starts showing the month
         this.yearView = new JToggleButton("Year", false);
 
         dayView.setPreferredSize(viewButtonSize);
         weekView.setPreferredSize(viewButtonSize);
         monthView.setPreferredSize(viewButtonSize);
         yearView.setPreferredSize(viewButtonSize);
-        
+
         this.chooseView = new ButtonGroup();
         this.chooseView.add(dayView);
         this.chooseView.add(weekView);
@@ -80,84 +83,62 @@ public class TopPanel extends JPanel {
 
         this.createButton = new JButton(create);
         this.editButton = new JButton(edit);
+        createButton.setToolTipText("Create event");
+        editButton.setToolTipText("Edit selected event");
 
         this.previousDate = new JButton("<");
         this.nextDate = new JButton(">");
         previousDate.setPreferredSize(viewButtonSize);
         nextDate.setPreferredSize(viewButtonSize);
 
-        String label = LocalDate.now().toString();
-        this.currentViewLabel = new JLabel(
-                label,
-                SwingConstants.CENTER);
-
-        currentViewLabel.setFont(
-                new Font("SansSerif", Font.BOLD, 24));
+        this.currentViewLabel = new JLabel(LocalDate.now().toString(), SwingConstants.CENTER);
+        currentViewLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
 
         searchBar = new JTextField();
         searchBar.setPreferredSize(new Dimension(350, 40));
-        searchBar.setToolTipText(
-                "Search by title, description or location");
+        searchBar.setToolTipText("Search by title, description or location");
     }
 
-
     private void buildLayout() {
+        // Left: view-mode toggles and navigation arrows.
+        JPanel leftPanel = new JPanel(new GridLayout(2, 1));
 
-        // ==========================================
-        // LEFT PANEL (Day / Week / Month / Year)
-        // ==========================================
-        JPanel leftPanel = new JPanel(
-            new GridLayout(2,1));
-
-        JPanel viewModePanel = new JPanel(
-                new FlowLayout(FlowLayout.LEFT, 0, 0));
+        JPanel viewModePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         viewModePanel.add(dayView);
         viewModePanel.add(weekView);
         viewModePanel.add(monthView);
         viewModePanel.add(yearView);
 
-        JPanel previousNextPanel = new JPanel(
-            new FlowLayout(FlowLayout.CENTER, 0, 0));
+        JPanel previousNextPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         previousNextPanel.add(previousDate);
         previousNextPanel.add(nextDate);
         leftPanel.add(viewModePanel);
         leftPanel.add(previousNextPanel);
 
-        // ==========================================
-        // CENTER PANEL
-        // ==========================================
+        // Center: current date label and search bar.
         JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
-
         centerPanel.add(currentViewLabel, BorderLayout.NORTH);
         centerPanel.add(searchBar, BorderLayout.CENTER);
 
-        // ==========================================
-        // RIGHT PANEL
-        // ==========================================
-        JPanel rightPanel = new JPanel(
-                new GridLayout(2, 2, 10, 10));
-
+        // Right: theme switch and create/edit buttons.
+        JPanel rightPanel = new JPanel(new GridLayout(2, 2, 10, 10));
         rightPanel.add(lightMode);
         rightPanel.add(darkMode);
         rightPanel.add(editButton);
         rightPanel.add(createButton);
 
-        // ==========================================
-        // ADD TO TOP PANEL
-        // ==========================================
         add(leftPanel, BorderLayout.WEST);
         add(centerPanel, BorderLayout.CENTER);
         add(rightPanel, BorderLayout.EAST);
     }
 
-
-    private void refreshLabel() {
-
-    }
-
-    // Binds all the buttons to the actions of Controller
+    /**
+     * Binds every button to its controller action.
+     *
+     * @param controller the controller to delegate actions to
+     */
     public void bind(Controller controller) {
-        this.Control = controller;
+        this.controller = controller;
 
         dayView.addActionListener(e -> controller.setViewMode(ViewMode.DAY));
         weekView.addActionListener(e -> controller.setViewMode(ViewMode.WEEK));
@@ -171,50 +152,77 @@ public class TopPanel extends JPanel {
         lightMode.addActionListener(e -> controller.setDarkMode(false));
     }
 
-    //Refreshes the Central Label and the colors, as the state of the model changes
+    /** Refreshes the central label and the colours as the model state changes. */
     public void refresh() {
-        if (Control == null) {
+        if (controller == null) {
             return;
         }
-        CalendarModel model = Control.getModel();
+        CalendarModel model = controller.getModel();
         currentViewLabel.setText(buildLabel(model));
+        syncToggles(model);
         applyTheme(model);
     }
 
+    /** @return the create button (wired by {@link CalendarView}) */
     public JButton getCreateButton() {
         return createButton;
     }
 
+    /** @return the edit button (wired by {@link CalendarView}) */
     public JButton getEditButton() {
         return editButton;
     }
 
+    /** @return the search field (wired by {@link CalendarView}) */
     public JTextField getSearchBar() {
         return searchBar;
     }
 
+    /**
+     * Builds the label shown above the search bar for the current view mode.
+     *
+     * @param model the calendar model
+     * @return the formatted label
+     */
     private String buildLabel(CalendarModel model) {
         LocalDate d = model.getCurrentViewDate();
-        Locale enbr = new Locale("en", "BR");
+        Locale en = Locale.ENGLISH;
         switch (model.getCurrentMode()) {
             case DAY:
-                return capitalize(d.format(
-                    DateTimeFormatter.ofPattern("EEEE, yyyy/MM/dd", enbr)));
+                return d.format(DateTimeFormatter.ofPattern("EEEE, yyyy/MM/dd", en));
             case WEEK:
-                return "Week of " + d.format(
-                    DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+                return "Week of " + d.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
             case YEAR:
                 return String.valueOf(d.getYear());
             case MONTH:
             default:
-                return capitalize(d.format(
-                    DateTimeFormatter.ofPattern("MMMM 'of' yyyy", enbr)));
+                return d.format(DateTimeFormatter.ofPattern("MMMM 'of' yyyy", en));
         }
     }
 
+    /**
+     * Keeps the toggle group in sync with the model's view mode (so it stays
+     * correct even when the mode changes from elsewhere).
+     *
+     * @param model the calendar model
+     */
+    private void syncToggles(CalendarModel model) {
+        switch (model.getCurrentMode()) {
+            case DAY:   dayView.setSelected(true);   break;
+            case WEEK:  weekView.setSelected(true);  break;
+            case YEAR:  yearView.setSelected(true);  break;
+            case MONTH: monthView.setSelected(true); break;
+        }
+    }
+
+    /**
+     * Applies the active theme to every component of the bar.
+     *
+     * @param model the calendar model
+     */
     private void applyTheme(CalendarModel model) {
         boolean dark = model.getDarkMode();
-        modeColors mc = modeColors.of(dark);
+        ThemeColors mc = ThemeColors.of(dark);
 
         paintPanels(this, mc.background);
         currentViewLabel.setForeground(mc.text);
@@ -223,7 +231,7 @@ public class TopPanel extends JPanel {
         searchBar.setCaretColor(mc.text);
         searchBar.setBorder(BorderFactory.createLineBorder(mc.gridLine));
 
-        // theme-aware icons (light glyphs over dark buttons, dark glyphs otherwise)
+        // Theme-aware icons (light glyphs over dark buttons, dark glyphs otherwise).
         darkSwitch = Icons.themed(IconFiles.SWITCH_DARK, dark, 30, 30);
         lightSwitch = Icons.themed(IconFiles.SWITCH_LIGHT, dark, 30, 30);
         edit = Icons.themed(IconFiles.EDIT_ICON, dark, 20, 20);
@@ -233,7 +241,7 @@ public class TopPanel extends JPanel {
         editButton.setIcon(edit);
         createButton.setIcon(create);
 
-        // view toggles: the active mode is highlighted with the accent color
+        // View toggles: the active mode is highlighted with the accent colour.
         ViewMode current = model.getCurrentMode();
         mc.styleButton(dayView, current == ViewMode.DAY);
         mc.styleButton(weekView, current == ViewMode.WEEK);
@@ -248,7 +256,12 @@ public class TopPanel extends JPanel {
         mc.styleButton(darkMode, dark);
     }
 
-    // paints the background of this panel and the background of the internal panels
+    /**
+     * Paints this panel and all of its nested panels with the given background.
+     *
+     * @param container the container to paint
+     * @param bg        the background colour
+     */
     private void paintPanels(Container container, Color bg) {
         if (container instanceof JPanel) {
             container.setBackground(bg);
@@ -259,12 +272,4 @@ public class TopPanel extends JPanel {
             }
         }
     }
-
-    private String capitalize(String s) {
-        if (s.isEmpty()) {
-            return s;
-        }
-        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
-    }
 }
-

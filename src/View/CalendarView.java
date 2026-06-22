@@ -5,11 +5,13 @@ import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.time.format.DateTimeFormatter;
+import java.util.EnumMap;
 import java.util.List;
-
+import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import Controller.Controller;
@@ -17,18 +19,27 @@ import Model.CalendarModel;
 import Model.Event;
 
 /**
- * Janela principal do programa. Junta o painel de cima (botoes e busca),
- * a grade do mes e a lista de eventos do dia. Ouve as mudancas do modelo
- * (padrao Observer dos JavaBeans) e manda os paineis se atualizarem.
+ * Main window of the application. It combines the top bar, the central calendar
+ * view (which switches between day, week, month and year) and the day-events side
+ * panel. It listens to the model (JavaBeans Observer pattern) and tells the
+ * panels to refresh.
  */
 public class CalendarView extends JFrame implements PropertyChangeListener {
     private final Controller controller;
     private final CalendarModel model;
 
     private final TopPanel topPanel;
-    private final CalendarMonthPanel monthPanel;
     private final DayEventsPanel dayPanel;
 
+    /** Central views, one per mode; the active one is shown in the center. */
+    private final Map<ViewMode, CalendarSubView> views = new EnumMap<>(ViewMode.class);
+    private final JPanel centerArea;
+
+    /**
+     * Builds and lays out the main window.
+     *
+     * @param controller the controller that drives the application
+     */
     public CalendarView(Controller controller) {
         this.controller = controller;
         this.model = controller.getModel();
@@ -41,12 +52,18 @@ public class CalendarView extends JFrame implements PropertyChangeListener {
 
         topPanel = new TopPanel();
         topPanel.bind(controller);
-        monthPanel = new CalendarMonthPanel(controller);
         dayPanel = new DayEventsPanel(this, controller);
         dayPanel.setPreferredSize(new Dimension(330, 0));
 
+        views.put(ViewMode.DAY, new DayViewPanel(controller));
+        views.put(ViewMode.WEEK, new WeekViewPanel(controller));
+        views.put(ViewMode.MONTH, new CalendarMonthPanel(controller));
+        views.put(ViewMode.YEAR, new YearViewPanel(controller));
+
+        centerArea = new JPanel(new BorderLayout());
+
         add(topPanel, BorderLayout.NORTH);
-        add(monthPanel, BorderLayout.CENTER);
+        add(centerArea, BorderLayout.CENTER);
         add(dayPanel, BorderLayout.EAST);
 
         wireExtraButtons();
@@ -54,16 +71,20 @@ public class CalendarView extends JFrame implements PropertyChangeListener {
         refreshAll();
     }
 
-    // botoes e busca que dependem de outros paineis sao ligados aqui
+    /** Wires the buttons and search field that depend on other panels. */
     private void wireExtraButtons() {
         topPanel.getCreateButton().addActionListener(e -> dayPanel.openCreate());
         topPanel.getEditButton().addActionListener(e -> dayPanel.openEdit());
         topPanel.getSearchBar().addActionListener(e -> doSearch());
     }
 
+    /**
+     * Reacts to relevant model changes by redrawing the panels.
+     *
+     * @param evt the property-change event
+     */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        // qualquer mudanca relevante no modelo redesenha os paineis
         switch (evt.getPropertyName()) {
             case "currentMode":
             case "currentViewDate":
@@ -75,14 +96,31 @@ public class CalendarView extends JFrame implements PropertyChangeListener {
         }
     }
 
+    /** Refreshes the top bar, the active central view and the side panel. */
     private void refreshAll() {
-        getContentPane().setBackground(modeColors.of(model.getDarkMode()).background);
+        ThemeColors mc = ThemeColors.of(model.getDarkMode());
+        getContentPane().setBackground(mc.background);
+        centerArea.setBackground(mc.background);
+
         topPanel.refresh();
-        monthPanel.refresh();
+        showActiveView();
         dayPanel.refresh();
     }
 
-    // busca por palavra-chave em todos os eventos e deixa o usuario ir ate a data
+    /** Places the central view that matches the model's current mode. */
+    private void showActiveView() {
+        CalendarSubView view = views.get(model.getCurrentMode());
+        view.refresh();
+        centerArea.removeAll();
+        centerArea.add(view.getComponent(), BorderLayout.CENTER);
+        centerArea.revalidate();
+        centerArea.repaint();
+    }
+
+    /**
+     * Searches every event for the keyword in the search bar and lets the user
+     * jump to one of the results.
+     */
     private void doSearch() {
         String keyword = topPanel.getSearchBar().getText();
         if (keyword.trim().isEmpty()) {
@@ -92,28 +130,28 @@ public class CalendarView extends JFrame implements PropertyChangeListener {
         List<Event> results = controller.search(keyword);
         if (results.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                "Nenhum evento encontrado para \"" + keyword.trim() + "\".",
-                "Busca", JOptionPane.INFORMATION_MESSAGE);
+                "No event found for \"" + keyword.trim() + "\".",
+                "Search", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        String[] linhas = new String[results.size()];
+        String[] lines = new String[results.size()];
         for (int i = 0; i < results.size(); i++) {
             Event e = results.get(i);
-            linhas[i] = e.getDate().format(fmt) + " " + e.getTime() + " - " + e.getTitle();
+            lines[i] = e.getDate().format(fmt) + " " + e.getTime() + " - " + e.getTitle();
         }
 
-        JList<String> lista = new JList<>(linhas);
-        lista.setSelectedIndex(0);
-        JScrollPane scroll = new JScrollPane(lista);
+        JList<String> list = new JList<>(lines);
+        list.setSelectedIndex(0);
+        JScrollPane scroll = new JScrollPane(list);
         scroll.setPreferredSize(new Dimension(360, 200));
 
         int r = JOptionPane.showConfirmDialog(this, scroll,
-            "Resultados da busca (selecione para ir ate a data)",
+            "Search results (select one to jump to its date)",
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
-        int idx = lista.getSelectedIndex();
+        int idx = list.getSelectedIndex();
         if (r == JOptionPane.OK_OPTION && idx >= 0) {
             controller.selectDate(results.get(idx).getDate());
         }

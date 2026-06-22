@@ -5,25 +5,37 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 
 /**
- * Class that contais the colors that each color theme uses.
- * Tem dois temas prontos (claro e escuro) e o metodo of() devolve
- * o tema certo dependendo do darkMode.
+ * Colour palette used by the interface. Two ready-made themes are provided
+ * (light and dark); {@link #of(boolean)} returns the right one for the current
+ * dark-mode flag.
  */
-public class modeColors {
+public class ThemeColors {
+    /** Window background. */
     public final Color background;
+    /** Background of panels and input fields. */
     public final Color panel;
+    /** Primary text colour. */
     public final Color text;
+    /** Secondary, lower-contrast text colour. */
     public final Color subtleText;
+    /** Colour of grid and border lines. */
     public final Color gridLine;
+    /** Highlight colour for today's cell. */
     public final Color today;
+    /** Highlight colour for days that have events. */
     public final Color hasEvents;
+    /** Highlight colour for the selected day. */
     public final Color selected;
+    /** Accent colour. */
     public final Color accent;
+    /** Default button background. */
     public final Color button;
+    /** Default button text colour. */
     public final Color buttonText;
+    /** Background of a selected/active button. */
     public final Color buttonSelected;
 
-    private modeColors(Color background, Color panel, Color text, Color subtleText,
+    private ThemeColors(Color background, Color panel, Color text, Color subtleText,
             Color gridLine, Color today, Color hasEvents, Color selected, Color accent,
             Color button, Color buttonText, Color buttonSelected) {
         this.background = background;
@@ -40,7 +52,8 @@ public class modeColors {
         this.buttonSelected = buttonSelected;
     }
 
-    public static final modeColors LIGHT = new modeColors(
+    /** Light theme. */
+    public static final ThemeColors LIGHT = new ThemeColors(
         new Color(245, 245, 245),
         new Color(255, 255, 255),
         new Color(30, 30, 30),
@@ -54,7 +67,8 @@ public class modeColors {
         new Color(30, 30, 30),
         new Color(70, 130, 200));
 
-    public static final modeColors DARK = new modeColors(
+    /** Dark theme. */
+    public static final ThemeColors DARK = new ThemeColors(
         new Color(40, 42, 48),
         new Color(54, 57, 64),
         new Color(230, 230, 230),
@@ -68,15 +82,25 @@ public class modeColors {
         new Color(230, 230, 230),
         new Color(95, 155, 220));
 
-    public static modeColors of(boolean darkMode) {
+    /**
+     * Returns the palette for the requested theme.
+     *
+     * @param darkMode {@code true} for the dark theme
+     * @return the matching palette
+     */
+    public static ThemeColors of(boolean darkMode) {
         return darkMode ? DARK : LIGHT;
     }
 
     /**
-     * Aplica o tema atual a um botao (ou toggle), garantindo que ele seja
-     * totalmente pintado com a cor do tema mesmo no Look and Feel padrao
-     * (Metal), o que evita as "faixas brancas" no modo escuro. Quando
-     * {@code selected} e verdadeiro, usa a cor de destaque.
+     * Applies the current theme to a button (or toggle), forcing it to be fully
+     * painted with the theme colour even under the default (Metal) Look and Feel.
+     * This is what prevents the "white bands" that used to appear on buttons in
+     * dark mode. When {@code selected} is {@code true}, the accent background is
+     * used instead.
+     *
+     * @param b        the button to style
+     * @param selected whether the button is in its selected/active state
      */
     public void styleButton(AbstractButton b, boolean selected) {
         b.setOpaque(true);

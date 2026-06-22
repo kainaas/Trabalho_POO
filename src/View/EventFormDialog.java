@@ -35,20 +35,22 @@ import Model.EventValidationException;
 import Model.Recurrence;
 
 /**
- * Janela de formulario para criar ou editar um evento. Ela junta os dados,
- * pede a validacao para o Controller e, se estiver tudo certo, guarda o
- * evento pronto em result. Quem abriu a janela pega o resultado com getResult().
+ * Form window to create or edit an event. It gathers the data, asks the
+ * {@link Controller} to validate it and, when everything is correct, stores the
+ * finished event in {@code result}. The caller reads it back with
+ * {@link #getResult()}.
  */
 public class EventFormDialog extends JDialog {
 
-    // opcoes de lembrete mostradas no combo e os minutos de antecedencia de cada uma
+    /** Reminder options shown in the combo box. */
     private static final String[] REMINDER_LABELS = {
-        "Sem lembrete", "10 minutos antes", "1 hora antes", "1 dia antes"
+        "No reminder", "10 minutes before", "1 hour before", "1 day before"
     };
+    /** Lead time, in minutes, for each reminder option. */
     private static final long[] REMINDER_MINUTES = { 0, 10, 60, 1440 };
 
     private static final String[] CATEGORIES = {
-        "Reuniao", "Aniversario", "Compromisso", "Outro"
+        "Meeting", "Birthday", "Appointment", "Other"
     };
 
     private final Controller controller;
@@ -64,8 +66,16 @@ public class EventFormDialog extends JDialog {
 
     private Event result;
 
+    /**
+     * Builds the form.
+     *
+     * @param owner       the parent window
+     * @param controller  the controller used to validate/build the event
+     * @param existing    the event being edited, or {@code null} to create one
+     * @param displayDate the date to pre-fill (the selected day)
+     */
     public EventFormDialog(Frame owner, Controller controller, Event existing, LocalDate displayDate) {
-        super(owner, existing == null ? "Novo evento" : "Editar evento", true);
+        super(owner, existing == null ? "New event" : "Edit event", true);
         this.controller = controller;
 
         buildComponents();
@@ -112,19 +122,19 @@ public class EventFormDialog extends JDialog {
         c.anchor = GridBagConstraints.WEST;
 
         int row = 0;
-        addRow(form, c, row++, "Titulo:", titleField);
-        addRow(form, c, row++, "Data (dia/mes/ano):", datePanel());
-        addRow(form, c, row++, "Hora (hora:min):", timePanel());
-        addRow(form, c, row++, "Duracao (min):", durationSpinner);
-        addRow(form, c, row++, "Categoria:", categoryCombo);
-        addRow(form, c, row++, "Local:", locationField);
-        addRow(form, c, row++, "Descricao:", new JScrollPane(descriptionArea));
-        addRow(form, c, row++, "Lembrete:", reminderCombo);
-        addRow(form, c, row++, "Repeticao:", recurrenceCombo);
-        addRow(form, c, row++, "Participantes:", attendeesPanel());
+        addRow(form, c, row++, "Title:", titleField);
+        addRow(form, c, row++, "Date (day/month/year):", datePanel());
+        addRow(form, c, row++, "Time (hour:min):", timePanel());
+        addRow(form, c, row++, "Duration (min):", durationSpinner);
+        addRow(form, c, row++, "Category:", categoryCombo);
+        addRow(form, c, row++, "Location:", locationField);
+        addRow(form, c, row++, "Description:", new JScrollPane(descriptionArea));
+        addRow(form, c, row++, "Reminder:", reminderCombo);
+        addRow(form, c, row++, "Repeats:", recurrenceCombo);
+        addRow(form, c, row++, "Attendees:", attendeesPanel());
 
-        JButton ok = new JButton("Salvar");
-        JButton cancel = new JButton("Cancelar");
+        JButton ok = new JButton("Save");
+        JButton cancel = new JButton("Cancel");
         ok.addActionListener(e -> onSave());
         cancel.addActionListener(e -> { result = null; dispose(); });
 
@@ -154,7 +164,30 @@ public class EventFormDialog extends JDialog {
         p.add(monthSpinner);
         p.add(new JLabel("/"));
         p.add(yearSpinner);
+
+        JButton pick = new JButton("📅"); // calendar emoji
+        pick.setToolTipText("Pick from a calendar");
+        pick.setMargin(new Insets(2, 6, 2, 6));
+        pick.addActionListener(e -> openDatePicker());
+        p.add(pick);
         return p;
+    }
+
+    /** Opens the calendar picker and copies the chosen date into the spinners. */
+    private void openDatePicker() {
+        LocalDate current = LocalDate.of(
+            (Integer) yearSpinner.getValue(),
+            (Integer) monthSpinner.getValue(),
+            (Integer) daySpinner.getValue());
+        DatePickerDialog picker = new DatePickerDialog(
+            this, current, controller.getModel().getDarkMode());
+        picker.setVisible(true);
+        LocalDate chosen = picker.getPickedDate();
+        if (chosen != null) {
+            yearSpinner.setValue(chosen.getYear());
+            monthSpinner.setValue(chosen.getMonthValue());
+            daySpinner.setValue(chosen.getDayOfMonth());
+        }
     }
 
     private JPanel timePanel() {
@@ -171,8 +204,8 @@ public class EventFormDialog extends JDialog {
         JScrollPane scroll = new JScrollPane(list);
         scroll.setPreferredSize(new Dimension(220, 60));
 
-        JButton add = new JButton("Adicionar");
-        JButton remove = new JButton("Remover");
+        JButton add = new JButton("Add");
+        JButton remove = new JButton("Remove");
         add.addActionListener(e -> promptAttendee());
         remove.addActionListener(e -> {
             int i = list.getSelectedIndex();
@@ -190,38 +223,40 @@ public class EventFormDialog extends JDialog {
         return p;
     }
 
+    /** Prompts for a new attendee and adds it to the list after validation. */
     private void promptAttendee() {
-        JTextField nome = new JTextField();
+        JTextField name = new JTextField();
         JTextField email = new JTextField();
         JPanel p = new JPanel(new GridLayout(0, 1, 0, 3));
-        p.add(new JLabel("Nome:"));
-        p.add(nome);
+        p.add(new JLabel("Name:"));
+        p.add(name);
         p.add(new JLabel("Email:"));
         p.add(email);
 
         int r = JOptionPane.showConfirmDialog(
-            this, p, "Adicionar participante", JOptionPane.OK_CANCEL_OPTION);
+            this, p, "Add attendee", JOptionPane.OK_CANCEL_OPTION);
         if (r != JOptionPane.OK_OPTION) {
             return;
         }
 
-        String n = nome.getText().trim();
+        String n = name.getText().trim();
         String e = email.getText().trim();
         if (n.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                "O nome do participante nao pode ficar vazio.",
-                "Dados invalidos", JOptionPane.WARNING_MESSAGE);
+                "The attendee's name cannot be empty.",
+                "Invalid data", JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (!e.isEmpty() && (!e.contains("@") || !e.contains("."))) {
             JOptionPane.showMessageDialog(this,
-                "O email informado nao parece valido.",
-                "Dados invalidos", JOptionPane.WARNING_MESSAGE);
+                "The e-mail does not look valid.",
+                "Invalid data", JOptionPane.WARNING_MESSAGE);
             return;
         }
         attendeesModel.addElement(new Attendee(n, e));
     }
 
+    /** Collects the form data, validates it through the controller and closes. */
     private void onSave() {
         int year   = (Integer) yearSpinner.getValue();
         int month  = (Integer) monthSpinner.getValue();
@@ -245,9 +280,9 @@ public class EventFormDialog extends JDialog {
                 reminder, recurrence, attendees);
             dispose();
         } catch (EventValidationException ex) {
-            // mostra o erro e deixa a janela aberta para o usuario corrigir
+            // Show the error and keep the window open so the user can fix it.
             JOptionPane.showMessageDialog(this, ex.getMessage(),
-                "Dados invalidos", JOptionPane.WARNING_MESSAGE);
+                "Invalid data", JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -286,6 +321,9 @@ public class EventFormDialog extends JDialog {
         }
     }
 
+    /**
+     * @return the event built from the form, or {@code null} if cancelled
+     */
     public Event getResult() {
         return result;
     }

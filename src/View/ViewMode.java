@@ -1,30 +1,38 @@
 package View;
 
 /**
- * Determines the main panel view.
+ * The granularity of the central calendar view.
  */
 public enum ViewMode {
-    DAY(0), WEEK(1), MONTH(2), YEAR(3);
+    /** Shows a single day. */
+    DAY(0),
+    /** Shows one week. */
+    WEEK(1),
+    /** Shows one month. */
+    MONTH(2),
+    /** Shows the twelve months of a year. */
+    YEAR(3);
 
-    private int mode;
+    private final int mode;
 
     private ViewMode(int mode) {
         this.mode = mode;
     }
 
+    /** @return the numeric code of the mode */
     public int getViewMode() {
         return mode;
     }
 
+    /** @return a human-readable label for the mode */
     @Override
     public String toString() {
-        String a = "";
         switch (mode) {
-            case 0: a = "Day"; break;
-            case 1: a = "Week"; break;
-            case 2: a = "Month"; break;
-            case 3: a = "Year"; break;
-        };
-        return a;
+            case 0:  return "Day";
+            case 1:  return "Week";
+            case 2:  return "Month";
+            case 3:  return "Year";
+            default: return "";
+        }
     }
 }

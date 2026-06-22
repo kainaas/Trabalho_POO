@@ -30,15 +30,15 @@ import Model.Event;
 import Model.StorageException;
 
 /**
- * Painel lateral que mostra os eventos do dia selecionado. Da para ver os
- * detalhes de cada evento e usar os botoes para criar, editar ou excluir.
- * Quando o evento se repete, pergunta se a acao vale so para aquele dia ou
- * para a serie inteira.
+ * Side panel that shows the events of the selected day. It displays the details
+ * of each event and offers buttons to create, edit and delete. When an event
+ * recurs, it asks whether the action applies to that single day or to the whole
+ * series.
  */
 public class DayEventsPanel extends JPanel {
     private static final int SCOPE_THIS = 0;
     private static final int SCOPE_ALL = 1;
-    private static final Locale PT_BR = new Locale("pt", "BR");
+    private static final Locale EN = Locale.ENGLISH;
 
     private final JFrame owner;
     private final Controller controller;
@@ -50,6 +50,12 @@ public class DayEventsPanel extends JPanel {
     private final JTextArea details;
     private JButton newButton, editButton, deleteButton;
 
+    /**
+     * Builds the side panel.
+     *
+     * @param owner      the main window (parent of the dialogs)
+     * @param controller the controller used for create/edit/delete
+     */
     public DayEventsPanel(JFrame owner, Controller controller) {
         this.owner = owner;
         this.controller = controller;
@@ -87,9 +93,9 @@ public class DayEventsPanel extends JPanel {
     }
 
     private JPanel buildButtons() {
-        newButton = new JButton("Novo");
-        editButton = new JButton("Editar");
-        deleteButton = new JButton("Excluir");
+        newButton = new JButton("New");
+        editButton = new JButton("Edit");
+        deleteButton = new JButton("Delete");
 
         newButton.addActionListener(e -> openCreate());
         editButton.addActionListener(e -> openEdit());
@@ -102,8 +108,9 @@ public class DayEventsPanel extends JPanel {
         return panel;
     }
 
+    /** Reloads the day's events and reapplies the theme. */
     public void refresh() {
-        modeColors mc = modeColors.of(model.getDarkMode());
+        ThemeColors mc = ThemeColors.of(model.getDarkMode());
         setBackground(mc.background);
         dateLabel.setForeground(mc.text);
         eventJList.setBackground(mc.panel);
@@ -119,8 +126,8 @@ public class DayEventsPanel extends JPanel {
         dateLabel.setText(formatDate(day));
 
         listModel.clear();
-        List<Event> doDia = model.getEventsOn(day);
-        for (Event e : doDia) {
+        List<Event> ofDay = model.getEventsOn(day);
+        for (Event e : ofDay) {
             listModel.addElement(e);
         }
         details.setText("");
@@ -129,6 +136,7 @@ public class DayEventsPanel extends JPanel {
         repaint();
     }
 
+    /** Fills the details area with the data of the selected event. */
     private void showDetails() {
         Event e = eventJList.getSelectedValue();
         if (e == null) {
@@ -136,23 +144,22 @@ public class DayEventsPanel extends JPanel {
             return;
         }
 
-        LocalDate day = model.getCurrentViewDate();
         StringBuilder sb = new StringBuilder();
-        sb.append("Titulo: ").append(e.getTitle()).append('\n');
-        sb.append("Quando: ").append(e.getTime())
+        sb.append("Title: ").append(e.getTitle()).append('\n');
+        sb.append("When: ").append(e.getTime())
           .append(" (").append(e.getDuration()).append(" min)\n");
-        sb.append("Categoria: ").append(e.getCategory()).append('\n');
+        sb.append("Category: ").append(e.getCategory()).append('\n');
         if (e.getLocation() != null && !e.getLocation().isEmpty()) {
-            sb.append("Local: ").append(e.getLocation()).append('\n');
+            sb.append("Location: ").append(e.getLocation()).append('\n');
         }
-        sb.append("Repeticao: ").append(e.getRecurrence()).append('\n');
-        sb.append("Lembrete: ").append(reminderText(e.getReminderLeadMinutes())).append('\n');
+        sb.append("Repeats: ").append(e.getRecurrence()).append('\n');
+        sb.append("Reminder: ").append(reminderText(e.getReminderLeadMinutes())).append('\n');
 
         if (e.getDescription() != null && !e.getDescription().isEmpty()) {
-            sb.append("\nDescricao:\n").append(e.getDescription()).append('\n');
+            sb.append("\nDescription:\n").append(e.getDescription()).append('\n');
         }
         if (!e.getAttendees().isEmpty()) {
-            sb.append("\nParticipantes:\n");
+            sb.append("\nAttendees:\n");
             for (Attendee a : e.getAttendees()) {
                 sb.append("- ").append(a).append('\n');
             }
@@ -161,82 +168,86 @@ public class DayEventsPanel extends JPanel {
         details.setCaretPosition(0);
     }
 
+    /** Opens the form to create a new event on the selected day. */
     public void openCreate() {
-        EventFormDialog dialog = new EventFormDialog(owner, controller, null, model.getCurrentViewDate());
+        EventFormDialog dialog =
+            new EventFormDialog(owner, controller, null, model.getCurrentViewDate());
         dialog.setVisible(true);
-        Event novo = dialog.getResult();
-        if (novo == null) {
+        Event created = dialog.getResult();
+        if (created == null) {
             return;
         }
         try {
-            boolean ok = controller.createEvent(novo);
+            boolean ok = controller.createEvent(created);
             if (!ok) {
                 JOptionPane.showMessageDialog(this,
-                    "Ja existe um evento com esse titulo.",
-                    "Nao foi possivel criar", JOptionPane.WARNING_MESSAGE);
+                    "An event with this title already exists.",
+                    "Could not create", JOptionPane.WARNING_MESSAGE);
             }
         } catch (StorageException ex) {
             showStorageError(ex);
         }
     }
 
+    /** Opens the form to edit the selected event. */
     public void openEdit() {
-        Event selecionado = eventJList.getSelectedValue();
-        if (selecionado == null) {
+        Event selected = eventJList.getSelectedValue();
+        if (selected == null) {
             JOptionPane.showMessageDialog(this,
-                "Selecione um evento para editar.",
-                "Nenhum evento selecionado", JOptionPane.INFORMATION_MESSAGE);
+                "Select an event to edit.",
+                "No event selected", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
         LocalDate day = model.getCurrentViewDate();
-        EventFormDialog dialog = new EventFormDialog(owner, controller, selecionado, day);
+        EventFormDialog dialog = new EventFormDialog(owner, controller, selected, day);
         dialog.setVisible(true);
-        Event editado = dialog.getResult();
-        if (editado == null) {
+        Event edited = dialog.getResult();
+        if (edited == null) {
             return;
         }
 
         try {
-            if (selecionado.isRecurring()) {
-                int escopo = askScope("editar");
-                if (escopo == SCOPE_THIS) {
-                    controller.editOccurrence(selecionado, day, editado);
-                } else if (escopo == SCOPE_ALL) {
-                    replaceWarningIfNeeded(controller.replaceEvent(selecionado, editado));
+            if (selected.isRecurring()) {
+                int scope = askScope("edit");
+                if (scope == SCOPE_THIS) {
+                    controller.editOccurrence(selected, day, edited);
+                } else if (scope == SCOPE_ALL) {
+                    replaceWarningIfNeeded(controller.replaceEvent(selected, edited));
                 }
             } else {
-                replaceWarningIfNeeded(controller.replaceEvent(selecionado, editado));
+                replaceWarningIfNeeded(controller.replaceEvent(selected, edited));
             }
         } catch (StorageException ex) {
             showStorageError(ex);
         }
     }
 
+    /** Deletes the selected event (asking about scope when it recurs). */
     private void doDelete() {
-        Event selecionado = eventJList.getSelectedValue();
-        if (selecionado == null) {
+        Event selected = eventJList.getSelectedValue();
+        if (selected == null) {
             JOptionPane.showMessageDialog(this,
-                "Selecione um evento para excluir.",
-                "Nenhum evento selecionado", JOptionPane.INFORMATION_MESSAGE);
+                "Select an event to delete.",
+                "No event selected", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
         LocalDate day = model.getCurrentViewDate();
         try {
-            if (selecionado.isRecurring()) {
-                int escopo = askScope("excluir");
-                if (escopo == SCOPE_THIS) {
-                    controller.deleteOccurrence(selecionado, day);
-                } else if (escopo == SCOPE_ALL) {
-                    controller.deleteEvent(selecionado);
+            if (selected.isRecurring()) {
+                int scope = askScope("delete");
+                if (scope == SCOPE_THIS) {
+                    controller.deleteOccurrence(selected, day);
+                } else if (scope == SCOPE_ALL) {
+                    controller.deleteEvent(selected);
                 }
             } else {
                 int r = JOptionPane.showConfirmDialog(this,
-                    "Excluir o evento \"" + selecionado.getTitle() + "\"?",
-                    "Confirmar exclusao", JOptionPane.YES_NO_OPTION);
+                    "Delete the event \"" + selected.getTitle() + "\"?",
+                    "Confirm deletion", JOptionPane.YES_NO_OPTION);
                 if (r == JOptionPane.YES_OPTION) {
-                    controller.deleteEvent(selecionado);
+                    controller.deleteEvent(selected);
                 }
             }
         } catch (StorageException ex) {
@@ -244,45 +255,55 @@ public class DayEventsPanel extends JPanel {
         }
     }
 
-    // pergunta se a acao vale so para o dia escolhido ou para a serie toda
-    private int askScope(String acao) {
-        Object[] opcoes = { "Somente esta", "Toda a serie", "Cancelar" };
+    /**
+     * Asks whether a recurring action applies to a single day or the whole series.
+     *
+     * @param action the verb shown to the user ("edit" / "delete")
+     * @return {@link #SCOPE_THIS}, {@link #SCOPE_ALL} or the cancel index
+     */
+    private int askScope(String action) {
+        Object[] options = { "Only this one", "Whole series", "Cancel" };
         return JOptionPane.showOptionDialog(this,
-            "Este evento se repete. Deseja " + acao + " somente esta ocorrencia ou a serie inteira?",
-            "Evento recorrente",
+            "This event repeats. Do you want to " + action
+                + " only this occurrence or the whole series?",
+            "Recurring event",
             JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-            null, opcoes, opcoes[0]);
+            null, options, options[0]);
     }
 
     private void replaceWarningIfNeeded(boolean ok) {
         if (!ok) {
             JOptionPane.showMessageDialog(this,
-                "Ja existe outro evento com esse titulo.",
-                "Nao foi possivel salvar", JOptionPane.WARNING_MESSAGE);
+                "Another event with this title already exists.",
+                "Could not save", JOptionPane.WARNING_MESSAGE);
         }
     }
 
     private void showStorageError(StorageException ex) {
         JOptionPane.showMessageDialog(this, ex.getMessage(),
-            "Erro de arquivo", JOptionPane.ERROR_MESSAGE);
+            "File error", JOptionPane.ERROR_MESSAGE);
     }
 
+    /**
+     * Turns a reminder lead time into readable text.
+     *
+     * @param minutes lead time in minutes
+     * @return the readable label
+     */
     private String reminderText(long minutes) {
-        if (minutes <= 0)   return "Sem lembrete";
-        if (minutes == 10)  return "10 minutos antes";
-        if (minutes == 60)  return "1 hora antes";
-        if (minutes == 1440) return "1 dia antes";
-        return minutes + " minutos antes";
+        if (minutes <= 0)    return "No reminder";
+        if (minutes == 10)   return "10 minutes before";
+        if (minutes == 60)   return "1 hour before";
+        if (minutes == 1440) return "1 day before";
+        return minutes + " minutes before";
     }
 
     private String formatDate(LocalDate day) {
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy", PT_BR);
-        String texto = day.format(fmt);
-        // deixa a primeira letra maiuscula (o nome do dia vem em minusculo)
-        return Character.toUpperCase(texto.charAt(0)) + texto.substring(1);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy", EN);
+        return day.format(fmt);
     }
 
-    // mostra cada evento da lista como "HH:mm  Titulo"
+    /** Renders each list entry as "HH:mm  Title". */
     private class EventRenderer extends JLabel implements ListCellRenderer<Event> {
         EventRenderer() {
             setOpaque(true);
@@ -292,15 +313,14 @@ public class DayEventsPanel extends JPanel {
         @Override
         public Component getListCellRendererComponent(JList<? extends Event> list, Event value,
                 int index, boolean isSelected, boolean cellHasFocus) {
-            modeColors mc = modeColors.of(model.getDarkMode());
+            ThemeColors mc = ThemeColors.of(model.getDarkMode());
             setText(value.getTime() + "  " + value.getTitle());
             if (isSelected) {
                 setBackground(mc.selected);
-                setForeground(mc.text);
             } else {
                 setBackground(mc.panel);
-                setForeground(mc.text);
             }
+            setForeground(mc.text);
             return this;
         }
     }

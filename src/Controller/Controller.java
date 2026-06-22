@@ -13,26 +13,49 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Connects the interface to the model. Make the data validation, creates/edits/erases
- * events and tells to save in the file. Does not have direct access to screen elements:
- * who notifies the view are the notifications from the model.
+ * Connects the interface to the model. It validates input, creates, edits and
+ * deletes events and asks the storage to persist them. It has no direct access
+ * to screen elements: the view is notified through the model's property-change
+ * events.
  */
 public class Controller {
     private final CalendarModel model;
     private final EventStorage storage;
 
+    /**
+     * Creates the controller.
+     *
+     * @param model   the calendar model
+     * @param storage the storage used to persist events
+     */
     public Controller(CalendarModel model, EventStorage storage) {
         this.model = model;
         this.storage = storage;
     }
 
+    /** @return the calendar model */
     public CalendarModel getModel() {
         return model;
     }
 
     /**
-     * Builds an event from the formulary data, validating everything.
-     * Throws EventValidationException with a message when an error happens
+     * Builds an event from the form data, validating everything.
+     *
+     * @param year        starting year
+     * @param month       starting month (1-12)
+     * @param day         starting day of month
+     * @param hour        starting hour (0-23)
+     * @param minute      starting minute (0-59)
+     * @param duration    duration in minutes
+     * @param title       event title
+     * @param category    event category
+     * @param location    event location
+     * @param description free-text description
+     * @param reminderLead reminder lead time in minutes
+     * @param recurrence  recurrence rule
+     * @param attendees   list of attendees
+     * @return the validated event
+     * @throws EventValidationException if any field is invalid
      */
     public Event buildEvent(int year, int month, int day, int hour, int minute,
             long duration, String title, String category, String location,
@@ -52,7 +75,7 @@ public class Controller {
                     duration, title, category, description);
         } catch (DateTimeException ex) {
             throw new EventValidationException(
-                "Date or time invalid. Check the day, month and time");
+                "Invalid date or time. Check the day, month and time.");
         }
 
         e.setLocation(location == null ? "" : location.trim());
@@ -66,19 +89,30 @@ public class Controller {
         return e;
     }
 
-    // Adds a new event; Returns false if there's already an event with this title
+    /**
+     * Adds a new event.
+     *
+     * @param e the event to add
+     * @return {@code false} if an event with this title already exists
+     * @throws StorageException if saving fails
+     */
     public boolean createEvent(Event e) throws StorageException {
-        boolean adicionado = model.addEvent(e);
-        if (adicionado) {
+        boolean added = model.addEvent(e);
+        if (added) {
             save();
         }
-        return adicionado;
+        return added;
     }
 
-    /** 
-     * Changes the event for an edited version
-     * @returns false if the new title already belongs to other events (in that case, keeps the old one)
-    */
+    /**
+     * Replaces an event with an edited version.
+     *
+     * @param oldEvent the event being replaced
+     * @param newEvent the edited event
+     * @return {@code false} if the new title already belongs to another event
+     *         (in which case the old event is kept)
+     * @throws StorageException if saving fails
+     */
     public boolean replaceEvent(Event oldEvent, Event newEvent) throws StorageException {
         model.removeEvent(oldEvent);
         boolean ok = model.addEvent(newEvent);
@@ -90,7 +124,15 @@ public class Controller {
         return true;
     }
 
-    // Edits only the ocurrence of that day: takes it out of the recurrence and creates a new event
+    /**
+     * Edits only the occurrence on the given day: it is taken out of the series
+     * and turned into a stand-alone event.
+     *
+     * @param master the recurring event
+     * @param day    the day of the occurrence being edited
+     * @param edited the edited stand-alone event
+     * @throws StorageException if saving fails
+     */
     public void editOccurrence(Event master, LocalDate day, Event edited) throws StorageException {
         master.addExceptionDate(day);
         edited.setRecurrence(Recurrence.NONE);
@@ -98,38 +140,73 @@ public class Controller {
         save();
     }
 
+    /**
+     * Deletes an event entirely.
+     *
+     * @param e the event to delete
+     * @throws StorageException if saving fails
+     */
     public void deleteEvent(Event e) throws StorageException {
         model.removeEvent(e);
         save();
     }
 
-    // apaga so a ocorrencia daquele dia, mantendo o resto da serie
+    /**
+     * Deletes only the occurrence on the given day, keeping the rest of the series.
+     *
+     * @param master the recurring event
+     * @param day    the day of the occurrence to delete
+     * @throws StorageException if saving fails
+     */
     public void deleteOccurrence(Event master, LocalDate day) throws StorageException {
         model.removeOccurrence(master, day);
         save();
     }
 
+    /**
+     * Searches the events for a keyword.
+     *
+     * @param keyword the text to look for
+     * @return the matching events
+     */
     public List<Event> search(String keyword) {
         return model.searchEvents(keyword);
     }
 
+    /**
+     * Selects a day and clears the current event selection.
+     *
+     * @param day the day to select
+     */
     public void selectDate(LocalDate day) {
         model.setViewDate(day);
         model.setEventSelected(null);
     }
 
+    /**
+     * Changes the active view mode.
+     *
+     * @param mode the new view mode
+     */
     public void setViewMode(ViewMode mode) {
         model.setViewMode(mode);
     }
 
+    /**
+     * Switches between the light and dark themes.
+     *
+     * @param dark {@code true} for the dark theme
+     */
     public void setDarkMode(boolean dark) {
         model.setDarkMode(dark);
     }
 
+    /** Jumps the view to today's date. */
     public void goToday() {
         model.setViewDate(LocalDate.now());
     }
 
+    /** Moves the view one step back, by an amount that depends on the view mode. */
     public void goPrevious() {
         LocalDate d = model.getCurrentViewDate();
         switch (model.getCurrentMode()) {
@@ -140,6 +217,7 @@ public class Controller {
         }
     }
 
+    /** Moves the view one step forward, by an amount that depends on the view mode. */
     public void goNext() {
         LocalDate d = model.getCurrentViewDate();
         switch (model.getCurrentMode()) {
@@ -150,10 +228,20 @@ public class Controller {
         }
     }
 
+    /**
+     * Loads the events from disk into the model.
+     *
+     * @throws StorageException if reading fails
+     */
     public void loadFromDisk() throws StorageException {
         model.loadEvents(storage.load());
     }
 
+    /**
+     * Persists the current events to disk.
+     *
+     * @throws StorageException if writing fails
+     */
     private void save() throws StorageException {
         storage.save(model.getAllEvents());
     }

@@ -1,0 +1,182 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[margin=1.8cm]{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\setlist{noitemsep,topsep=2pt,leftmargin=1.4em}
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{0pt}
+
+\title{\vspace{-1.0cm}\textbf{Java Event Planner} \\[1mm]
+\large Relatório do Projeto Final}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.4cm}
+
+% ---------------------------------------------------------------- group id
+\begin{center}
+\textbf{SCC0204 — Programação Orientada a Objetos} \quad ICMC — USP \\[1mm]
+\begin{tabular}{ll}
+\toprule
+\textbf{Integrante} & \textbf{Nº USP} \\
+\midrule
+Fabio Kauê Araujo da Silva & 16311045 \\
+Kainã Alves Tureso & 15466391 \\
+Luís Henrique de Queiroz Veras & 14592414 \\
+\bottomrule
+\end{tabular} \\[1mm]
+Repositório: \url{https://github.com/kainaas/Trabalho_POO}
+\end{center}
+
+% ---------------------------------------------------------------- 1
+\section{Requisitos}
+O \textbf{Java Event Planner} é um aplicativo \emph{desktop} (Java + Swing) para
+organização de compromissos em um calendário. \textbf{Requisitos funcionais:}
+\begin{itemize}
+  \item Cadastro, edição e exclusão de eventos com título, data, hora, duração,
+        local, descrição e categoria (reunião, aniversário, compromisso ou outro).
+  \item Eventos recorrentes (diário, semanal ou mensal), com a opção de
+        editar/excluir \emph{somente uma ocorrência} ou \emph{a série inteira}.
+  \item Participantes (nome e e-mail) e lembretes (10\,min, 1\,h ou 1\,dia antes),
+        exibidos em tempo de execução.
+  \item Busca por palavra-chave (título, descrição, local ou categoria).
+  \item Persistência dos eventos em arquivo, recarregados na abertura do programa.
+\end{itemize}
+\textbf{Requisitos adicionais} levantados pela nossa implementação:
+\begin{itemize}
+  \item \textbf{Quatro modos de visualização} — Dia (agenda por hora), Semana (sete
+        colunas), Mês (grade) e Ano (os doze meses) — trocados na barra superior.
+  \item \textbf{Tema claro/escuro} aplicado a toda a interface, com ícones próprios
+        para cada tema e botões totalmente repintados (sem ``faixas brancas'').
+  \item \textbf{Indicador da quantidade de eventos} de cada dia, na própria célula.
+  \item \textbf{Seletor de data por calendário} no formulário de evento.
+  \item \textbf{Robustez na leitura}: linhas inválidas do arquivo são ignoradas.
+\end{itemize}
+
+% ---------------------------------------------------------------- 2
+\section{Descrição do Projeto}
+A aplicação segue o padrão \textbf{MVC}, refletido na divisão em pacotes:
+\textbf{Model} (dados e regras: \texttt{CalendarModel}, \texttt{Event},
+\texttt{Attendee}, \texttt{Recurrence}, \texttt{EventStorage}, \texttt{AbstractModel}
+e as exceções), \textbf{View} (telas Swing: \texttt{CalendarView},
+\texttt{TopPanel}, os quatro modos \texttt{DayViewPanel}/\texttt{WeekViewPanel}/%
+\texttt{CalendarMonthPanel}/\texttt{YearViewPanel}, \texttt{DayEventsPanel},
+\texttt{EventFormDialog}, \texttt{DatePickerDialog}, \texttt{ReminderService},
+\texttt{Icons}, \texttt{ThemeColors}, \texttt{ViewMode}), \textbf{Controller}
+(\texttt{Controller}) e \textbf{Main}.
+
+\textbf{Observer.} \texttt{CalendarModel} herda de \texttt{AbstractModel}, que
+encapsula um \texttt{PropertyChangeSupport}. Toda alteração relevante (novo evento,
+troca de data, de modo de visualização ou de tema) dispara uma notificação;
+a \texttt{CalendarView} implementa \texttt{PropertyChangeListener} e redesenha os
+painéis, sem que o modelo conheça a interface.
+
+\textbf{Visualizações.} O centro da janela troca o painel conforme o \texttt{ViewMode}
+atual (interface \texttt{CalendarSubView}). \textbf{Recorrência:} guarda-se apenas o
+evento ``mestre'' e o método \texttt{occursOn(dia)} calcula sob demanda se ele cai em
+uma data, usando um conjunto de \emph{datas de exceção} para remoções pontuais. O
+diagrama de classes está em \texttt{docs/uml.puml} e a documentação gerada
+(\texttt{javadoc}) em \texttt{docs/javadoc}.
+
+% ---------------------------------------------------------------- 3
+\section{Comentários sobre o Código}
+O código está documentado no padrão \textbf{Javadoc} (em inglês) nas classes e
+métodos não triviais. Conceitos de POO aplicados:
+\begin{itemize}
+  \item \textbf{Encapsulamento:} campos \texttt{private} expostos por
+        \emph{getters/setters}; a validação de um \texttt{Event} é centralizada no
+        \texttt{Controller}.
+  \item \textbf{Herança:} \texttt{CalendarModel} de \texttt{AbstractModel}; as
+        exceções de \texttt{Exception}; os painéis de \texttt{JPanel}, a janela de
+        \texttt{JFrame} e os formulários de \texttt{JDialog}.
+  \item \textbf{Polimorfismo:} \texttt{toString()} sobrescrito em \texttt{Recurrence},
+        \texttt{Attendee} e \texttt{ViewMode}; \texttt{CalendarView} implementa
+        \texttt{PropertyChangeListener}; \texttt{ReminderService} implementa
+        \texttt{Runnable}; os quatro modos implementam \texttt{CalendarSubView}.
+  \item \textbf{Composição:} um \texttt{CalendarModel} é dono da lista de
+        \texttt{Event}, e cada \texttt{Event} é dono de seus \texttt{Attendee}.
+\end{itemize}
+As cores de cada tema ficam em \texttt{ThemeColors}, cujo método \texttt{styleButton}
+repinta os botões de forma consistente mesmo no \emph{Look and Feel} padrão (Metal),
+evitando as ``faixas brancas'' no modo escuro.
+
+% ---------------------------------------------------------------- 4
+\section{Plano de Testes}
+A lógica de negócio é coberta por uma suíte automatizada em \textbf{JUnit~5}
+(\texttt{test/}, 28 casos), executável com \texttt{test/run-tests.cmd}:
+\begin{itemize}
+  \item \texttt{EventTest} — \texttt{occursOn} para os quatro tipos de recorrência,
+        datas de exceção e cálculo do fim do evento.
+  \item \texttt{CalendarModelTest} — título único, contagem por dia, ordenação
+        cronológica, busca e remoção de ocorrência.
+  \item \texttt{ControllerTest} — validações (título vazio, duração $\le 0$, data
+        inválida), bloqueio de duplicata e gravação em disco.
+  \item \texttt{EventStorageTest} — ida-e-volta de gravação/leitura, tolerância a
+        linhas corrompidas e arquivo inexistente.
+  \item \texttt{ModelValueTest} — \texttt{toString} de \texttt{Attendee} e
+        \texttt{Recurrence}.
+\end{itemize}
+Complementarmente, foram feitos testes manuais de interface: troca de tema, troca de
+modo de visualização, lembretes e o seletor de data por calendário.
+
+% ---------------------------------------------------------------- 5
+\section{Resultados dos Testes}
+Todos os 28 testes passam (Java~25, JUnit~5.8.2). Saída resumida do console:
+\begin{center}\small
+\texttt{[\ 28 tests found\ ] [\ 28 tests started\ ] [\ 28 tests successful\ ] [\ 0 tests failed\ ]}
+\end{center}
+Os testes manuais de interface também passaram: o tema é aplicado a botões, ícones,
+células e campos (sem ``faixas brancas''); os quatro modos de visualização funcionam;
+a persistência é estável e um arquivo corrompido não derruba o programa.
+
+% ---------------------------------------------------------------- 6
+\section{Procedimentos de Build}
+Não há bibliotecas externas — apenas o JDK (testado no Java~25; JDK~17+ deve funcionar).
+\begin{enumerate}
+  \item \textbf{Instalar o JDK} (ex.: Eclipse Temurin, \url{https://adoptium.net});
+        verifique com \texttt{java -version} e \texttt{javac -version}.
+  \item \textbf{Obter o código:} \texttt{git clone https://github.com/kainaas/Trabalho\_POO.git}
+        e \texttt{cd Trabalho\_POO/src}.
+  \item \textbf{Compilar} (Windows: \texttt{compile.cmd}):
+        \texttt{javac -encoding UTF-8 -d bin ./Controller/*.java ./Model/*.java ./View/*.java ./Main/*.java}
+  \item \textbf{Executar} (Windows: \texttt{Run.cmd}): \texttt{cd bin \&\& java Main.Main}.
+        O diretório de trabalho deve ser \texttt{bin} para resolver os ícones em
+        \texttt{bin/iconImages}; \texttt{events.txt} é criado ali no primeiro salvamento.
+  \item \textbf{Testes (opcional):} com \texttt{junit-platform-console-standalone-1.8.2.jar}
+        na raiz, rode \texttt{test/run-tests.cmd}.
+\end{enumerate}
+
+% ---------------------------------------------------------------- 7
+\section{Problemas}
+\begin{itemize}
+  \item \textbf{Recorrência.} A primeira ideia (uma cópia por dia) gastava memória;
+        a solução foi o evento ``mestre'' com \texttt{occursOn} sob demanda e um
+        conjunto de datas de exceção.
+  \item \textbf{Título único vs.\ editar uma ocorrência.} A regra de título único
+        conflitava com a edição de ``somente esta'' ocorrência (que gera um avulso
+        de mesmo título); resolvido com \texttt{addEventForced}, usado só nesse caso.
+  \item \textbf{Formato do arquivo.} Persistir listas exigiu separadores em dois
+        níveis (TAB e vírgula) e leitura tolerante a linhas inválidas.
+  \item \textbf{Concorrência.} O \texttt{ReminderService} roda em uma \emph{thread}
+        \emph{daemon} e os avisos usam \texttt{SwingUtilities.invokeLater}.
+\end{itemize}
+
+% ---------------------------------------------------------------- 8
+\section{Comentários}
+O projeto foi desenvolvido de forma incremental e versionado no GitHub. A arquitetura
+MVC com Observer manteve a interface desacoplada das regras de negócio, o que facilitou
+adicionar recursos (tema escuro, indicador de eventos, modos de visualização e seletor
+de data) sem reescrever as telas. Conforme o \emph{peer review} da disciplina, os
+apontamentos do grupo revisor serão documentados e respondidos nesta seção na versão
+final.
+
+\end{document}
