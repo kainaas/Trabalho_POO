@@ -49,6 +49,7 @@ public class DayEventsPanel extends JPanel {
     private final JList<Event> eventJList;
     private final JTextArea details;
     private JButton newButton, editButton, deleteButton;
+    private JPanel center, panel;
 
     /**
      * Builds the side panel.
@@ -81,7 +82,7 @@ public class DayEventsPanel extends JPanel {
         JScrollPane listScroll = new JScrollPane(eventJList);
         JScrollPane detailScroll = new JScrollPane(details);
 
-        JPanel center = new JPanel(new GridLayout(2, 1, 0, 8));
+        center = new JPanel(new GridLayout(2, 1, 0, 8));
         center.add(listScroll);
         center.add(detailScroll);
 
@@ -101,7 +102,7 @@ public class DayEventsPanel extends JPanel {
         editButton.addActionListener(e -> openEdit());
         deleteButton.addActionListener(e -> doDelete());
 
-        JPanel panel = new JPanel(new GridLayout(1, 3, 6, 0));
+        panel = new JPanel(new GridLayout(1, 3, 6, 0));
         panel.add(newButton);
         panel.add(editButton);
         panel.add(deleteButton);
@@ -112,6 +113,8 @@ public class DayEventsPanel extends JPanel {
     public void refresh() {
         ThemeColors mc = ThemeColors.of(model.getDarkMode());
         setBackground(mc.background);
+        center.setBackground(mc.background);
+        panel.setBackground(mc.background);
         dateLabel.setForeground(mc.text);
         eventJList.setBackground(mc.panel);
         eventJList.setForeground(mc.text);
